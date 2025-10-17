@@ -94,8 +94,6 @@ contract EthscriptionsCompressionTest is TestSetup {
     //         initialOwner: owner,
     //         contentUri: originalContent,
     //         mimetype: "image/png",
-    //         mediaType: "image",
-    //         mimeSubtype: "png",
     //         esip6: false,
     //         isCompressed: false,
     //         protocolParams: Ethscriptions.ProtocolParams({
@@ -112,8 +110,6 @@ contract EthscriptionsCompressionTest is TestSetup {
     //         initialOwner: owner,
     //         contentUri: compressedContent,
     //         mimetype: "image/png",
-    //         mediaType: "image",
-    //         mimeSubtype: "png",
     //         esip6: false,
     //         isCompressed: true,
     //         protocolParams: Ethscriptions.ProtocolParams({

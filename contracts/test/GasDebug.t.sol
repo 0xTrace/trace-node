@@ -41,7 +41,7 @@ contract GasDebugTest is TestSetup {
             Ethscriptions.Ethscription memory etsc = ethscriptions.getEthscription(params.transactionHash);
             assertEq(etsc.creator, INITIAL_OWNER);
             assertEq(etsc.initialOwner, INITIAL_OWNER);
-            assertEq(etsc.content.mimetype, "image/png");
+            assertEq(etsc.mimetype, "image/png");
         } catch Error(string memory reason) {
             console.log("Failed with reason:", reason);
             revert(reason);

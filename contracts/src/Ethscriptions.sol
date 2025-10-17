@@ -23,25 +23,24 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     //                          STRUCTS
     // =============================================================
 
-    struct ContentInfo {
-        bytes32 contentUriHash;  // SHA256 of raw content URI string (for protocol uniqueness)
-        bytes32 contentSha;      // SHA256 of decoded raw bytes (for storage reference)
-        string mimetype;         // Full MIME type (e.g., "text/plain")
-        string mediaType;        // e.g., "text", "image"
-        string mimeSubtype;      // e.g., "plain", "png"
-        bool esip6;
-    }
-
     struct Ethscription {
-        ContentInfo content;
+        // Full slots
+        bytes32 contentUriHash;
+        bytes32 contentSha;
+        bytes32 l1BlockHash;
+        // Packed slot (32 bytes)
         address creator;
+        uint48  createdAt;
+        uint48  l1BlockNumber;
+        // Dynamic
+        string  mimetype;
+        // Packed slot (27 bytes used, 5 free)
         address initialOwner;
+        uint48  ethscriptionNumber;
+        bool    esip6;
+        // Packed slot (26 bytes used, 6 free)
         address previousOwner;
-        uint256 ethscriptionNumber;
-        uint256 createdAt;       // Timestamp when created
-        uint64 l1BlockNumber;    // L1 block number when created
-        uint64 l2BlockNumber;    // L2 block number when created
-        bytes32 l1BlockHash;     // L1 block hash when created
+        uint48  l2BlockNumber;
     }
 
     struct ProtocolParams {
@@ -56,8 +55,6 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         address initialOwner;
         bytes content;           // Raw decoded bytes (not Base64)
         string mimetype;
-        string mediaType;
-        string mimeSubtype;
         bool esip6;
         ProtocolParams protocolParams;  // Protocol operation data (optional)
     }
@@ -216,22 +213,18 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         bytes32 contentSha = _storeContent(params.content);
 
         ethscriptions[params.transactionHash] = Ethscription({
-            content: ContentInfo({
-                contentUriHash: params.contentUriHash,
-                contentSha: contentSha,
-                mimetype: params.mimetype,
-                mediaType: params.mediaType,
-                mimeSubtype: params.mimeSubtype,
-                esip6: params.esip6
-            }),
+            contentUriHash: params.contentUriHash,
+            contentSha: contentSha,
+            l1BlockHash: l1Block.hash(),
             creator: creator,
+            createdAt: uint48(block.timestamp),
+            l1BlockNumber: uint48(l1Block.number()),
+            mimetype: params.mimetype,
             initialOwner: params.initialOwner,
-            previousOwner: creator, // Initially same as creator
-            ethscriptionNumber: totalSupply(),
-            createdAt: block.timestamp,
-            l1BlockNumber: l1Block.number(),
-            l2BlockNumber: uint64(block.number),
-            l1BlockHash: l1Block.hash()
+            ethscriptionNumber: uint48(totalSupply()),
+            esip6: params.esip6,
+            previousOwner: creator,
+            l2BlockNumber: uint48(block.number)
         });
 
         // Use ethscription number as token ID
@@ -377,7 +370,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     /// @notice Get content for an ethscription
     function getEthscriptionContent(bytes32 txHash) public view requireExists(txHash) returns (bytes memory) {
         Ethscription storage etsc = ethscriptions[txHash];
-        address[] storage pointers = contentPointersBySha[etsc.content.contentSha];
+        address[] storage pointers = contentPointersBySha[etsc.contentSha];
         // Empty content is valid - returns "" for empty pointers array
         return pointers.read();
     }
@@ -388,7 +381,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     /// @return content The content bytes
     function getEthscriptionWithContent(bytes32 txHash) external view requireExists(txHash) returns (Ethscription memory ethscription, bytes memory content) {
         ethscription = ethscriptions[txHash];
-        address[] storage pointers = contentPointersBySha[ethscription.content.contentSha];
+        address[] storage pointers = contentPointersBySha[ethscription.contentSha];
         // Empty content is valid - returns "" for empty pointers array
         content = pointers.read();
     }
@@ -620,8 +613,8 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
                 txHash,
                 etsc.creator,
                 etsc.initialOwner,
-                etsc.content.contentUriHash,
-                etsc.content.contentSha,
+                etsc.contentUriHash,
+                etsc.contentSha,
                 etsc.ethscriptionNumber
             );
         }

@@ -34,18 +34,11 @@ library EthscriptionsRendererLib {
 
         string memory part2 = string.concat(
             '"},{"trait_type":"Content SHA","value":"',
-            uint256(etsc.content.contentSha).toHexString(),
+            uint256(etsc.contentSha).toHexString(),
             '"},{"trait_type":"MIME Type","value":"',
-            etsc.content.mimetype.escapeJSON(),
-            '"},{"trait_type":"Media Type","value":"',
-            etsc.content.mediaType.escapeJSON(),
-            '"},{"trait_type":"MIME Subtype","value":"',
-            etsc.content.mimeSubtype.escapeJSON()
-        );
-
-        string memory part3 = string.concat(
+            etsc.mimetype.escapeJSON(),
             '"},{"trait_type":"ESIP-6","value":"',
-            etsc.content.esip6 ? "true" : "false",
+            etsc.esip6 ? "true" : "false",
             '"},{"trait_type":"L1 Block Number","display_type":"number","value":',
             uint256(etsc.l1BlockNumber).toString(),
             '},{"trait_type":"L2 Block Number","display_type":"number","value":',
@@ -55,7 +48,7 @@ library EthscriptionsRendererLib {
             '}]'
         );
 
-        return string.concat(part1, part2, part3);
+        return string.concat(part1, part2);
     }
 
     /// @notice Generate the media URI for an ethscription
@@ -68,22 +61,22 @@ library EthscriptionsRendererLib {
         view
         returns (string memory mediaType, string memory mediaUri)
     {
-        if (etsc.content.mimetype.startsWith("image/")) {
+        if (etsc.mimetype.startsWith("image/")) {
             // Image content: wrap in SVG for pixel-perfect rendering
-            string memory imageDataUri = constructDataURI(etsc.content.mimetype, content);
+            string memory imageDataUri = constructDataURI(etsc.mimetype, content);
             string memory svg = wrapImageInSVG(imageDataUri);
             mediaUri = constructDataURI("image/svg+xml", bytes(svg));
             return ("image", mediaUri);
         } else {
             // Non-image content: use animation_url
-            if (etsc.content.mimetype.startsWith("video/") ||
-                etsc.content.mimetype.startsWith("audio/") ||
-                etsc.content.mimetype.eq("text/html")) {
+            if (etsc.mimetype.startsWith("video/") ||
+                etsc.mimetype.startsWith("audio/") ||
+                etsc.mimetype.eq("text/html")) {
                 // Video, audio, and HTML pass through directly as data URIs
-                mediaUri = constructDataURI(etsc.content.mimetype, content);
+                mediaUri = constructDataURI(etsc.mimetype, content);
             } else {
                 // Everything else (text/plain, application/json, etc.) uses the HTML viewer
-                mediaUri = createTextViewerDataURI(etsc.content.mimetype, content);
+                mediaUri = createTextViewerDataURI(etsc.mimetype, content);
             }
             return ("animation_url", mediaUri);
         }

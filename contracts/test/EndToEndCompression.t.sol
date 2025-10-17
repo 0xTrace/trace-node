@@ -53,8 +53,6 @@ contract EndToEndCompressionTest is TestSetup {
     //     //     initialOwner: owner,
     //     //     contentUri: isCompressed ? compressedContent : bytes(originalContent),
     //     //     mimetype: "image/png",
-    //     //     mediaType: "image",
-    //     //     mimeSubtype: "png",
     //     //     esip6: false,
     //     //     isCompressed: isCompressed,
     //     //     protocolParams: Ethscriptions.ProtocolParams({

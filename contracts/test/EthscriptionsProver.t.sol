@@ -107,8 +107,6 @@ contract EthscriptionsProverTest is TestSetup {
                 initialOwner: alice,
                 content: bytes("test1"),
                 mimetype: "text/plain",
-                mediaType: "text",
-                mimeSubtype: "plain",
                 esip6: false,
                 protocolParams: Ethscriptions.ProtocolParams("", "", "")
             })
@@ -123,8 +121,6 @@ contract EthscriptionsProverTest is TestSetup {
                 initialOwner: bob,
                 content: bytes("test2"),
                 mimetype: "text/plain",
-                mediaType: "text",
-                mimeSubtype: "plain",
                 esip6: false,
                 protocolParams: Ethscriptions.ProtocolParams("", "", "")
             })
@@ -145,8 +141,6 @@ contract EthscriptionsProverTest is TestSetup {
                 initialOwner: charlie,
                 content: bytes("test3"),
                 mimetype: "text/plain",
-                mediaType: "text",
-                mimeSubtype: "plain",
                 esip6: false,
                 protocolParams: Ethscriptions.ProtocolParams("", "", "")
             })

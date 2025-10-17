@@ -19,10 +19,10 @@ contract EthscriptionsProver {
 
     /// @notice Info stored when an ethscription is queued for proving
     struct QueuedProof {
-        uint256 l2BlockNumber;
-        uint256 l2BlockTimestamp;
         bytes32 l1BlockHash;
-        uint256 l1BlockNumber;
+        uint48 l2BlockNumber;
+        uint48 l2BlockTimestamp;
+        uint48 l1BlockNumber;
     }
 
     /// @notice Struct for ethscription data proof
@@ -30,15 +30,15 @@ contract EthscriptionsProver {
         bytes32 ethscriptionTxHash;
         bytes32 contentSha;
         bytes32 contentUriHash;
+        bytes32 l1BlockHash;
         address creator;
         address currentOwner;
         address previousOwner;
-        uint256 ethscriptionNumber;
         bool esip6;
-        bytes32 l1BlockHash;
-        uint256 l1BlockNumber;
-        uint256 l2BlockNumber;
-        uint256 l2Timestamp;
+        uint48 ethscriptionNumber;
+        uint48 l1BlockNumber;
+        uint48 l2BlockNumber;
+        uint48 l2Timestamp;
     }
 
     // =============================================================
@@ -99,10 +99,10 @@ contract EthscriptionsProver {
             // Capture the L1 block hash and number at the time of queuing
             L1Block l1Block = L1Block(L1_BLOCK);
             queuedProofInfo[txHash] = QueuedProof({
-                l2BlockNumber: block.number,
-                l2BlockTimestamp: block.timestamp,
                 l1BlockHash: l1Block.hash(),
-                l1BlockNumber: l1Block.number()
+                l2BlockNumber: uint48(block.number),
+                l2BlockTimestamp: uint48(block.timestamp),
+                l1BlockNumber: uint48(l1Block.number())
             });
         }
     }
@@ -143,14 +143,14 @@ contract EthscriptionsProver {
         // Create proof struct with all ethscription data
         EthscriptionDataProof memory proof = EthscriptionDataProof({
             ethscriptionTxHash: ethscriptionTxHash,
-            contentSha: etsc.content.contentSha,
-            contentUriHash: etsc.content.contentUriHash,
+            contentSha: etsc.contentSha,
+            contentUriHash: etsc.contentUriHash,
+            l1BlockHash: proofInfo.l1BlockHash,
             creator: etsc.creator,
             currentOwner: currentOwner,
             previousOwner: etsc.previousOwner,
+            esip6: etsc.esip6,
             ethscriptionNumber: etsc.ethscriptionNumber,
-            esip6: etsc.content.esip6,
-            l1BlockHash: proofInfo.l1BlockHash,
             l1BlockNumber: proofInfo.l1BlockNumber,
             l2BlockNumber: proofInfo.l2BlockNumber,
             l2Timestamp: proofInfo.l2BlockTimestamp

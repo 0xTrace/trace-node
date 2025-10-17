@@ -22,8 +22,6 @@ contract TestTokenUri is Script {
             initialOwner: address(0x1111),
             content: bytes("Hello World!"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams("", "", "")
         }));
@@ -36,8 +34,6 @@ contract TestTokenUri is Script {
             initialOwner: address(0x2222),
             content: bytes('{"p":"erc-20","op":"mint","tick":"test","amt":"1000"}'),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams("", "", "")
         }));
@@ -50,8 +46,6 @@ contract TestTokenUri is Script {
             initialOwner: address(0x3333),
             content: bytes('<html><body style="background:linear-gradient(45deg,#ff006e,#8338ec);color:white;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><h1>Ethscriptions Rule!</h1></body></html>'),
             mimetype: "text/html",
-            mediaType: "text",
-            mimeSubtype: "html",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams("", "", "")
         }));
@@ -65,8 +59,6 @@ contract TestTokenUri is Script {
             initialOwner: address(0x4444),
             content: redPixelPng,
             mimetype: "image/png",
-            mediaType: "image",
-            mimeSubtype: "png",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams("", "", "")
         }));
@@ -79,8 +71,6 @@ contract TestTokenUri is Script {
             initialOwner: address(0x5555),
             content: bytes("body { background: #000; color: #0f0; font-family: 'Courier New'; }"),
             mimetype: "text/css",
-            mediaType: "text",
-            mimeSubtype: "css",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams("", "", "")
         }));

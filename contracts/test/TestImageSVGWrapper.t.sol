@@ -22,8 +22,6 @@ contract TestImageSVGWrapper is TestSetup {
             initialOwner: alice,
             content: pngContent,
             mimetype: "image/png",
-            mediaType: "image",
-            mimeSubtype: "png",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "",

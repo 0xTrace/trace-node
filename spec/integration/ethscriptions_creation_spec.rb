@@ -530,8 +530,6 @@ RSpec.describe "Ethscription Creation", type: :integration do
           # Verify content fields
           expect(stored[:content]).to eq("<svg>test</svg>")
           expect(stored[:mimetype]).to eq("image/svg+xml")
-          expect(stored[:media_type]).to eq("image")
-          expect(stored[:mime_subtype]).to eq("svg+xml")
 
           # Verify content URI hash
           expected_hash = Digest::SHA256.hexdigest(content_uri)
@@ -553,8 +551,6 @@ RSpec.describe "Ethscription Creation", type: :integration do
           stored = get_ethscription_content(results[:ethscription_ids].first)
 
           expect(stored[:mimetype]).to eq("application/json")
-          expect(stored[:media_type]).to eq("application")
-          expect(stored[:mime_subtype]).to eq("json")
 
           # Verify content URI hash matches
           expected_hash = Digest::SHA256.hexdigest(content_uri)

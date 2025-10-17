@@ -104,8 +104,6 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
             initialOwner: address(this),
             content: bytes("Hello World with failing token manager"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "test",
@@ -188,8 +186,6 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
             initialOwner: address(this),
             content: bytes("{\"p\":\"test\",\"op\":\"deploy\",\"tick\":\"FAIL\",\"max\":\"1000\",\"lim\":\"10\"}"),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "test",

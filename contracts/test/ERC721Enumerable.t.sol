@@ -23,8 +23,6 @@ contract ERC721EnumerableTest is TestSetup {
                 initialOwner: owner,
                 content: bytes(content),
                 mimetype: "text/plain",
-                mediaType: "text",
-                mimeSubtype: "plain",
                 esip6: false,
                 protocolParams: Ethscriptions.ProtocolParams({
                     protocolName: "",

@@ -51,8 +51,6 @@ contract EthscriptionsTokenTest is TestSetup {
             initialOwner: initialOwner,
             content: content,
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: protocol,
