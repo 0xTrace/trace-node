@@ -7,9 +7,6 @@ gem "rails", "8.0.2.1"
 
 # Use postgresql as the database for Active Record
 
-# Use the Puma web server [https://github.com/puma/puma]
-gem "puma", ">= 5.0"
-
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 # gem "jbuilder"
 
@@ -44,38 +41,16 @@ end
 
 gem "dotenv-rails", "~> 2.8", groups: [:development, :test]
 
-# For Ethscription content compression
-gem "fastlz", "~> 0.1.0"
-
-gem "dalli", "~> 3.2"
-
-gem "kaminari", "~> 1.2"
-
-gem "rack-cors", "~> 2.0"
-
 gem "eth", github: "0xFacet/eth.rb", branch: "sync/v0.5.16-nohex"
 
 gem 'sorbet', :group => :development
 gem 'sorbet-runtime'
 gem 'tapioca', require: false, :group => [:development, :test]
 
-gem "scout_apm", "~> 5.3"
-
-gem "memoist", "~> 0.16.2"
-
 gem "awesome_print", "~> 1.9"
 
 gem 'facet_rails_common', git: 'https://github.com/0xfacet/facet_rails_common.git'
 
-gem "redis", "~> 5.0"
-
-gem "cbor", "~> 0.5.9"
-
-gem 'rswag-api'
-
-gem 'rswag-ui'
-
-gem 'keccak', '~> 1.3'
 gem "memery", "~> 1.5"
 
 gem "httparty", "~> 0.22.0"
@@ -87,14 +62,10 @@ gem "clockwork", "~> 3.0"
 gem "airbrake", "~> 13.0"
 gem "clipboard", "~> 2.0", :group => [:development, :test]
 
-gem "parallel", "~> 1.25"
-
 gem "net-http-persistent", "~> 4.0"
 
 gem 'benchmark'
 gem 'ostruct'
-
-gem "oj", "~> 3.16"
 
 gem "retriable", "~> 3.1"
 
