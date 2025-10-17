@@ -226,15 +226,13 @@ contract EthscriptionsMultiTransferTest is TestSetup {
         string memory json = string(decodedJson);
 
         // Check all expected attributes
-        string[12] memory expectedTraits = [
+        string[10] memory expectedTraits = [
             "Transaction Hash",
             "Ethscription Number",
             "Creator",
             "Initial Owner",
             "Content SHA",
             "MIME Type",
-            "Media Type",
-            "MIME Subtype",
             "ESIP-6",
             "L1 Block Number",
             "L2 Block Number",

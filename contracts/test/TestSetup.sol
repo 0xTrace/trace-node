@@ -69,8 +69,6 @@ abstract contract TestSetup is Test {
         // Simple parsing for tests
         bytes memory content;
         string memory mimetype = "text/plain";
-        string memory mediaType = "text";
-        string memory mimeSubtype = "plain";
         bool isBase64 = false;
 
         // Check if data URI and parse
@@ -125,22 +123,6 @@ abstract contract TestSetup is Test {
                         for (uint256 i = 0; i < mimeEnd - 5; i++) {
                             bytes(mimetype)[i] = contentUriBytes[5 + i];
                         }
-
-                        // Parse media type and subtype
-                        bytes memory mimetypeBytes = bytes(mimetype);
-                        for (uint256 i = 0; i < mimetypeBytes.length; i++) {
-                            if (mimetypeBytes[i] == '/') {
-                                mediaType = string(new bytes(i));
-                                for (uint256 j = 0; j < i; j++) {
-                                    bytes(mediaType)[j] = mimetypeBytes[j];
-                                }
-                                mimeSubtype = string(new bytes(mimetypeBytes.length - i - 1));
-                                for (uint256 j = 0; j < mimetypeBytes.length - i - 1; j++) {
-                                    bytes(mimeSubtype)[j] = mimetypeBytes[i + 1 + j];
-                                }
-                                break;
-                            }
-                        }
                     }
                 }
             }
@@ -154,8 +136,6 @@ abstract contract TestSetup is Test {
             initialOwner: initialOwner,
             content: content,
             mimetype: mimetype,
-            mediaType: mediaType,
-            mimeSubtype: mimeSubtype,
             esip6: esip6,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "",

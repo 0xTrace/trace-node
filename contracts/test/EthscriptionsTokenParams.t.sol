@@ -24,8 +24,6 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             initialOwner: address(this),
             content: bytes(tokenJson),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "erc-20",
@@ -64,8 +62,6 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             initialOwner: address(this),
             content: bytes(tokenJson),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "erc-20",
@@ -93,8 +89,6 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             initialOwner: address(this),
             content: bytes(content),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "",
@@ -128,8 +122,6 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             initialOwner: address(this),
             content: bytes(deployJson),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "erc-20",
@@ -156,8 +148,6 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             initialOwner: address(this),
             content: bytes(mintJson),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "erc-20",

@@ -465,19 +465,8 @@ class BlockValidator
       @errors << "Storage mimetype mismatch for #{tx_hash}: stored=#{stored[:mimetype]}, expected=#{creation[:mimetype]}"
     end
 
-    # Verify media_type - normalize to binary for comparison (with instrumentation)
-    media_type_match = binary_equal?(stored[:media_type], creation[:media_type])
-    record_comparison("storage_media_type_check", tx_hash, creation[:media_type], stored[:media_type], media_type_match, { l1_block: l1_block_num })
-    if !media_type_match
-      @errors << "Storage media_type mismatch for #{tx_hash}: stored=#{stored[:media_type]}, expected=#{creation[:media_type]}"
-    end
-
-    # Verify mime_subtype - normalize to binary for comparison (with instrumentation)
-    mime_subtype_match = binary_equal?(stored[:mime_subtype], creation[:mime_subtype])
-    record_comparison("storage_mime_subtype_check", tx_hash, creation[:mime_subtype], stored[:mime_subtype], mime_subtype_match, { l1_block: l1_block_num })
-    if !mime_subtype_match
-      @errors << "Storage mime_subtype mismatch for #{tx_hash}: stored=#{stored[:mime_subtype]}, expected=#{creation[:mime_subtype]}"
-    end
+    # Note: media_type and mime_subtype are no longer stored in the contract
+    # They are derived from mimetype in StorageReader for backward compatibility
 
     # Verify esip6 flag - must match exactly (with instrumentation)
     esip6_match = stored[:esip6] == creation[:esip6]

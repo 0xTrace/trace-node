@@ -14,14 +14,14 @@ contract EthscriptionsWithTestFunctions is Ethscriptions {
     /// @dev Test-only function to inspect storage chunks
     function getContentPointerCount(bytes32 transactionHash) external view requireExists(transactionHash) returns (uint256) {
         Ethscription storage etsc = ethscriptions[transactionHash];
-        return contentPointersBySha[etsc.content.contentSha].length;
+        return contentPointersBySha[etsc.contentSha].length;
     }
 
     /// @notice Get all content pointers for an ethscription
     /// @dev Test-only function to inspect SSTORE2 addresses
     function getContentPointers(bytes32 transactionHash) external view requireExists(transactionHash) returns (address[] memory) {
         Ethscription storage etsc = ethscriptions[transactionHash];
-        return contentPointersBySha[etsc.content.contentSha];
+        return contentPointersBySha[etsc.contentSha];
     }
 
     /// @notice Read a specific chunk of content
@@ -31,7 +31,7 @@ contract EthscriptionsWithTestFunctions is Ethscriptions {
     /// @return The chunk data
     function readChunk(bytes32 transactionHash, uint256 index) external view requireExists(transactionHash) returns (bytes memory) {
         Ethscription storage etsc = ethscriptions[transactionHash];
-        address[] storage pointers = contentPointersBySha[etsc.content.contentSha];
+        address[] storage pointers = contentPointersBySha[etsc.contentSha];
         require(index < pointers.length, "Chunk index out of bounds");
         return SSTORE2.read(pointers[index]);
     }

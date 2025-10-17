@@ -1,31 +1,21 @@
 class StorageReader
   ETHSCRIPTIONS_ADDRESS = SysConfig::ETHSCRIPTIONS_ADDRESS.to_hex
 
-  # Define the nested ContentInfo struct
-  CONTENT_INFO_STRUCT = {
+  # Define the flattened Ethscription struct ABI
+  ETHSCRIPTION_STRUCT_ABI = {
     'components' => [
       { 'name' => 'contentUriHash', 'type' => 'bytes32' },
       { 'name' => 'contentSha', 'type' => 'bytes32' },
-      { 'name' => 'mimetype', 'type' => 'string' },
-      { 'name' => 'mediaType', 'type' => 'string' },
-      { 'name' => 'mimeSubtype', 'type' => 'string' },
-      { 'name' => 'esip6', 'type' => 'bool' }
-    ],
-    'type' => 'tuple'
-  }
-
-  # Define the Ethscription struct ABI with nested ContentInfo
-  ETHSCRIPTION_STRUCT_ABI = {
-    'components' => [
-      CONTENT_INFO_STRUCT,  # ContentInfo content
+      { 'name' => 'l1BlockHash', 'type' => 'bytes32' },
       { 'name' => 'creator', 'type' => 'address' },
+      { 'name' => 'createdAt', 'type' => 'uint48' },
+      { 'name' => 'l1BlockNumber', 'type' => 'uint48' },
+      { 'name' => 'mimetype', 'type' => 'string' },
       { 'name' => 'initialOwner', 'type' => 'address' },
+      { 'name' => 'ethscriptionNumber', 'type' => 'uint48' },
+      { 'name' => 'esip6', 'type' => 'bool' },
       { 'name' => 'previousOwner', 'type' => 'address' },
-      { 'name' => 'ethscriptionNumber', 'type' => 'uint256' },
-      { 'name' => 'createdAt', 'type' => 'uint256' },
-      { 'name' => 'l1BlockNumber', 'type' => 'uint64' },
-      { 'name' => 'l2BlockNumber', 'type' => 'uint64' },
-      { 'name' => 'l1BlockHash', 'type' => 'bytes32' }
+      { 'name' => 'l2BlockNumber', 'type' => 'uint48' }
     ],
     'type' => 'tuple'
   }
@@ -108,32 +98,35 @@ class StorageReader
       raise StandardError, "RPC call failed for ethscription #{tx_hash}" if result.nil?
 
       # Decode the tuple: (Ethscription, bytes)
-      types = ['((bytes32,bytes32,string,string,string,bool),address,address,address,uint256,uint256,uint64,uint64,bytes32)', 'bytes']
+      types = ['(bytes32,bytes32,bytes32,address,uint48,uint48,string,address,uint48,bool,address,uint48)', 'bytes']
       decoded = Eth::Abi.decode(types, result)
 
       # Extract ethscription struct and content
       ethscription_data = decoded[0]
       content_data = decoded[1]
-      content_info = ethscription_data[0]  # Nested ContentInfo struct
+
+      # Derive media_type and mime_subtype from mimetype
+      mimetype = ethscription_data[6]  # mimetype is at index 6
+      media_type, mime_subtype = mimetype.split('/', 2) if mimetype
 
       {
-        # ContentInfo fields
-        content_uri_hash: '0x' + content_info[0].unpack1('H*'),
-        content_sha: '0x' + content_info[1].unpack1('H*'),
-        mimetype: content_info[2],
-        media_type: content_info[3],
-        mime_subtype: content_info[4],
-        esip6: content_info[5],
+        # Content fields
+        content_uri_hash: '0x' + ethscription_data[0].unpack1('H*'),
+        content_sha: '0x' + ethscription_data[1].unpack1('H*'),
+        mimetype: mimetype,
+        media_type: media_type,
+        mime_subtype: mime_subtype,
+        esip6: ethscription_data[9],  # bool at index 9
 
-        # Main Ethscription fields
-        creator: Eth::Address.new(ethscription_data[1]).to_s,
-        initial_owner: Eth::Address.new(ethscription_data[2]).to_s,
-        previous_owner: Eth::Address.new(ethscription_data[3]).to_s,
-        ethscription_number: ethscription_data[4],
-        created_at: ethscription_data[5],
-        l1_block_number: ethscription_data[6],
-        l2_block_number: ethscription_data[7],
-        l1_block_hash: '0x' + ethscription_data[8].unpack1('H*'),
+        # Main fields
+        creator: Eth::Address.new(ethscription_data[3]).to_s,
+        initial_owner: Eth::Address.new(ethscription_data[7]).to_s,
+        previous_owner: Eth::Address.new(ethscription_data[10]).to_s,
+        ethscription_number: ethscription_data[8],
+        created_at: ethscription_data[4],
+        l1_block_number: ethscription_data[5],
+        l2_block_number: ethscription_data[11],
+        l1_block_hash: '0x' + ethscription_data[2].unpack1('H*'),
 
         # Content
         content: content_data
@@ -161,33 +154,35 @@ class StorageReader
       # Nil indicates an RPC/network failure
       raise StandardError, "RPC call failed for ethscription #{tx_hash}" if result.nil?
 
-      # Decode using Eth::Abi
-      # Updated types for nested struct: ContentInfo is a tuple within the main tuple
-      types = ['((bytes32,bytes32,string,string,string,bool),address,address,address,uint256,uint256,uint64,uint64,bytes32)']
+      # Decode using Eth::Abi - flattened struct
+      types = ['(bytes32,bytes32,bytes32,address,uint48,uint48,string,address,uint48,bool,address,uint48)']
       decoded = Eth::Abi.decode(types, result)
 
-      # The struct is returned as an array within an array
+      # The struct is returned as an array
       ethscription_data = decoded[0]
-      content_info = ethscription_data[0]  # Nested ContentInfo struct
+
+      # Derive media_type and mime_subtype from mimetype
+      mimetype = ethscription_data[6]  # mimetype is at index 6
+      media_type, mime_subtype = mimetype.split('/', 2) if mimetype
 
       {
-        # ContentInfo fields
-        content_uri_hash: '0x' + content_info[0].unpack1('H*'),
-        content_sha: '0x' + content_info[1].unpack1('H*'),
-        mimetype: content_info[2],
-        media_type: content_info[3],
-        mime_subtype: content_info[4],
-        esip6: content_info[5],
+        # Content fields
+        content_uri_hash: '0x' + ethscription_data[0].unpack1('H*'),
+        content_sha: '0x' + ethscription_data[1].unpack1('H*'),
+        mimetype: mimetype,
+        media_type: media_type,
+        mime_subtype: mime_subtype,
+        esip6: ethscription_data[9],  # bool at index 9
 
-        # Main Ethscription fields
-        creator: Eth::Address.new(ethscription_data[1]).to_s,
-        initial_owner: Eth::Address.new(ethscription_data[2]).to_s,
-        previous_owner: Eth::Address.new(ethscription_data[3]).to_s,
-        ethscription_number: ethscription_data[4],
-        created_at: ethscription_data[5],
-        l1_block_number: ethscription_data[6],
-        l2_block_number: ethscription_data[7],
-        l1_block_hash: '0x' + ethscription_data[8].unpack1('H*')
+        # Main fields
+        creator: Eth::Address.new(ethscription_data[3]).to_s,
+        initial_owner: Eth::Address.new(ethscription_data[7]).to_s,
+        previous_owner: Eth::Address.new(ethscription_data[10]).to_s,
+        ethscription_number: ethscription_data[8],
+        created_at: ethscription_data[4],
+        l1_block_number: ethscription_data[5],
+        l2_block_number: ethscription_data[11],
+        l1_block_hash: '0x' + ethscription_data[2].unpack1('H*')
       }
     rescue EthRpcClient::ExecutionRevertedError => e
       # Contract reverted - ethscription doesn't exist

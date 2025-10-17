@@ -82,8 +82,6 @@ contract CollectionsProtocolTest is TestSetup {
             initialOwner: alice,
             content: bytes(json),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",

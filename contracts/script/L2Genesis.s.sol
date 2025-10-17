@@ -44,22 +44,23 @@ contract GenesisEthscriptions is Ethscriptions {
 
         // Set all values including genesis-specific ones
         ethscriptions[params.transactionHash] = Ethscription({
-            content: ContentInfo({
-                contentUriHash: params.contentUriHash,
-                contentSha: contentSha,
-                mimetype: params.mimetype,
-                mediaType: params.mediaType,
-                mimeSubtype: params.mimeSubtype,
-                esip6: params.esip6
-            }),
+            // Fixed-size fields
+            contentUriHash: params.contentUriHash,
+            contentSha: contentSha,
+            l1BlockHash: l1BlockHash,
+            // Packed slot 3
             creator: creator,
+            createdAt: uint48(createdAt),
+            l1BlockNumber: uint48(l1BlockNumber),
+            // Dynamic field
+            mimetype: params.mimetype,
+            // Packed slot N
             initialOwner: params.initialOwner,
+            ethscriptionNumber: uint48(totalSupply()),
+            esip6: params.esip6,
+            // Packed slot N+1
             previousOwner: creator,
-            ethscriptionNumber: totalSupply(),
-            createdAt: createdAt,
-            l1BlockNumber: l1BlockNumber,
-            l2BlockNumber: 0,  // Genesis ethscriptions have no L2 block
-            l1BlockHash: l1BlockHash
+            l2BlockNumber: 0  // Genesis ethscriptions have no L2 block
         });
 
         // Use ethscription number as token ID
@@ -337,8 +338,6 @@ contract L2Genesis is Script {
         params.initialOwner = initialOwner;
         params.content = vm.parseJsonBytes(json, string.concat(basePath, ".content"));
         params.mimetype = vm.parseJsonString(json, string.concat(basePath, ".mimetype"));
-        params.mediaType = vm.parseJsonString(json, string.concat(basePath, ".media_type"));
-        params.mimeSubtype = vm.parseJsonString(json, string.concat(basePath, ".mime_subtype"));
         params.esip6 = vm.parseJsonBool(json, string.concat(basePath, ".esip6"));
         params.protocolParams = Ethscriptions.ProtocolParams({
             protocolName: "",

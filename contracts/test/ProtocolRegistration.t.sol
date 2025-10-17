@@ -117,8 +117,6 @@ contract ProtocolRegistrationTest is TestSetup {
             initialOwner: alice,
             content: bytes('{"p":"mock-protocol","op":"test"}'),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "mock-protocol",
@@ -163,8 +161,6 @@ contract ProtocolRegistrationTest is TestSetup {
             initialOwner: alice,
             content: bytes('{"p":"unregistered","op":"test"}'),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "unregistered",

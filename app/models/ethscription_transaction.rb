@@ -30,6 +30,7 @@ class EthscriptionTransaction < T::Struct
   # Debug info (can be removed if not needed)
   prop :ethscription_operation, T.nilable(String) # 'create', 'transfer', 'transfer_with_previous_owner'
 
+  MAX_MIMETYPE_LENGTH = 1000
   DEPOSIT_TX_TYPE = 0x7D
   MINT = 0
   VALUE = 0
@@ -107,7 +108,7 @@ class EthscriptionTransaction < T::Struct
   def function_selector
     function_signature = case ethscription_operation
     when 'create'
-      'createEthscription((bytes32,bytes32,address,bytes,string,string,string,bool,(string,string,bytes)))'
+      'createEthscription((bytes32,bytes32,address,bytes,string,bool,(string,string,bytes)))'
     when 'transfer'
       if transfer_ids && transfer_ids.any?
         'transferMultipleEthscriptions(bytes32[],address)'
@@ -218,9 +219,7 @@ class EthscriptionTransaction < T::Struct
     # Both input and event-based creates use data URI format
     # Events are "equivalent of an EOA hex-encoding contentURI and putting it in the calldata"
     data_uri = DataUri.new(content_uri)
-    mimetype = data_uri.mimetype.to_s
-    media_type = mimetype&.split('/')&.first
-    mime_subtype = mimetype&.split('/')&.last
+    mimetype = data_uri.mimetype.to_s.first(MAX_MIMETYPE_LENGTH)
     raw_content = data_uri.decoded_data.b
     esip6 = DataUri.esip6?(content_uri) || false
 
@@ -249,14 +248,12 @@ class EthscriptionTransaction < T::Struct
       owner_bin,                               # address
       raw_content,                             # bytes content
       mimetype.b,                              # string
-      media_type.to_s.b,                       # string
-      mime_subtype.to_s.b,                     # string
       esip6,                                   # bool esip6
       protocol_params                          # ProtocolParams tuple
     ]
 
     encoded = Eth::Abi.encode(
-      ['(bytes32,bytes32,address,bytes,string,string,string,bool,(string,string,bytes))'],
+      ['(bytes32,bytes32,address,bytes,string,bool,(string,string,bytes))'],
       [params]
     )
 

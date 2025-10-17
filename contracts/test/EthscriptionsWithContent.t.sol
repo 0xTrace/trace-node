@@ -20,8 +20,6 @@ contract EthscriptionsWithContentTest is TestSetup {
             initialOwner: initialOwner,
             content: bytes(testContent),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "",
@@ -40,10 +38,8 @@ contract EthscriptionsWithContentTest is TestSetup {
         assertEq(ethscription.initialOwner, initialOwner);
         assertEq(ethscription.previousOwner, creator);
         assertEq(ethscription.ethscriptionNumber, tokenId);
-        assertEq(ethscription.content.mimetype, "text/plain");
-        assertEq(ethscription.content.mediaType, "text");
-        assertEq(ethscription.content.mimeSubtype, "plain");
-        assertEq(ethscription.content.esip6, false);
+        assertEq(ethscription.mimetype, "text/plain");
+        assertEq(ethscription.esip6, false);
 
         // Verify content
         assertEq(content, bytes(testContent));
@@ -62,13 +58,11 @@ contract EthscriptionsWithContentTest is TestSetup {
         assertEq(ethscription.l2BlockNumber, ethscriptionSeparate.l2BlockNumber);
         assertEq(ethscription.l1BlockHash, ethscriptionSeparate.l1BlockHash);
 
-        // Compare content info
-        assertEq(ethscription.content.contentUriHash, ethscriptionSeparate.content.contentUriHash);
-        assertEq(ethscription.content.contentSha, ethscriptionSeparate.content.contentSha);
-        assertEq(ethscription.content.mimetype, ethscriptionSeparate.content.mimetype);
-        assertEq(ethscription.content.mediaType, ethscriptionSeparate.content.mediaType);
-        assertEq(ethscription.content.mimeSubtype, ethscriptionSeparate.content.mimeSubtype);
-        assertEq(ethscription.content.esip6, ethscriptionSeparate.content.esip6);
+        // Compare content fields
+        assertEq(ethscription.contentUriHash, ethscriptionSeparate.contentUriHash);
+        assertEq(ethscription.contentSha, ethscriptionSeparate.contentSha);
+        assertEq(ethscription.mimetype, ethscriptionSeparate.mimetype);
+        assertEq(ethscription.esip6, ethscriptionSeparate.esip6);
 
         // Compare content
         assertEq(content, contentSeparate);
@@ -102,8 +96,6 @@ contract EthscriptionsWithContentTest is TestSetup {
             initialOwner: initialOwner,
             content: largeContent,
             mimetype: "application/octet-stream",
-            mediaType: "application",
-            mimeSubtype: "octet-stream",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "",

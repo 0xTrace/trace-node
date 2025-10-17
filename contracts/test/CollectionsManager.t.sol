@@ -46,8 +46,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes(collectionContent),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -128,8 +126,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes(itemContent),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -224,8 +220,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes(removeContent),
             mimetype: "application/json",
-            mediaType: "application",
-            mimeSubtype: "json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -267,8 +261,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: bob,
             content: bytes("remove"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -331,8 +323,6 @@ contract CollectionsManagerTest is TestSetup {
                 initialOwner: owners[i],
                 content: abi.encodePacked("item", i),
                 mimetype: "text/plain",
-                mediaType: "text",
-                mimeSubtype: "plain",
                 esip6: false,
                 protocolParams: Ethscriptions.ProtocolParams({
                     protocolName: "collections",
@@ -408,8 +398,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes(imageContent),
             mimetype: "image/png",
-            mediaType: "image",
-            mimeSubtype: "png",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -479,8 +467,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("edit"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -518,8 +504,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("item content"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "",
@@ -556,8 +540,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("add"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -587,8 +569,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("partial-edit"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -632,8 +612,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: bob,
             content: bytes("bad-edit"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -672,8 +650,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("no-item"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -723,8 +699,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: charlie,
             content: bytes("sync"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -772,8 +746,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("sync-multi"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -804,8 +776,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("sync-nonexistent"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -832,8 +802,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("sync-fake"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -862,8 +830,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("lock"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
@@ -893,8 +859,6 @@ contract CollectionsManagerTest is TestSetup {
             initialOwner: alice,
             content: bytes("locked-edit"),
             mimetype: "text/plain",
-            mediaType: "text",
-            mimeSubtype: "plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
                 protocolName: "collections",
