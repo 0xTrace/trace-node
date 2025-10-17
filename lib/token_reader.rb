@@ -47,24 +47,23 @@ class TokenReader
     # struct TokenInfo {
     #   address tokenContract;
     #   bytes32 deployTxHash;
-    #   string protocol;
     #   string tick;
     #   uint256 maxSupply;
     #   uint256 mintAmount;
     #   uint256 totalMinted;
     # }
-    output_types = ['(address,bytes32,string,string,uint256,uint256,uint256)']
+    output_types = ['(address,bytes32,string,uint256,uint256,uint256)']
     decoded = Eth::Abi.decode(output_types, [result.delete_prefix('0x')].pack('H*'))
     token_tuple = decoded[0]
 
     {
       tokenContract: token_tuple[0],
       deployTxHash: '0x' + token_tuple[1].unpack1('H*'),
-      protocol: token_tuple[2],
-      tick: token_tuple[3],
-      maxSupply: token_tuple[4],
-      mintLimit: token_tuple[5], # mintAmount field is used as mintLimit
-      totalMinted: token_tuple[6],
+      protocol: 'erc-20',  # Always erc-20 for TokenManager
+      tick: token_tuple[2],
+      maxSupply: token_tuple[3],
+      mintLimit: token_tuple[4], # mintAmount field is used as mintLimit
+      totalMinted: token_tuple[5],
       # For backwards compatibility, add deployer field (not available in TokenInfo)
       deployer: nil,
       ethscriptionId: '0x' + token_tuple[1].unpack1('H*') # deployTxHash is the ethscriptionId

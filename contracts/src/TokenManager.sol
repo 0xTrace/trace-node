@@ -22,7 +22,6 @@ contract TokenManager is IProtocolHandler {
     struct TokenInfo {
         address tokenContract;
         bytes32 deployTxHash;
-        string protocol;
         string tick;
         uint256 maxSupply;
         uint256 mintAmount;
@@ -133,14 +132,41 @@ contract TokenManager is IProtocolHandler {
         // Revert if token already exists
         if (token.deployTxHash != bytes32(0)) revert TokenAlreadyDeployed();
 
-        _deployToken(
-            txHash,
-            tickKey,
-            protocolName(),
-            deployOp.tick,
-            deployOp.maxSupply,
-            deployOp.mintAmount
+        // Validate deployment parameters
+        if (deployOp.maxSupply == 0) revert InvalidMaxSupply();
+        if (deployOp.mintAmount == 0) revert InvalidMintAmount();
+        if (deployOp.maxSupply % deployOp.mintAmount != 0) revert MaxSupplyNotDivisibleByMintAmount();
+
+        // Deploy ERC20 clone with CREATE2 using tickKey as salt for deterministic address
+        address tokenAddress = erc20Template.cloneDeterministic(tickKey);
+
+        // Initialize the clone
+        string memory name = string.concat(protocolName(), " ", deployOp.tick);
+        string memory symbol = LibString.upper(deployOp.tick);
+
+        // Initialize with max supply in 18 decimals
+        // User maxSupply "1000000" means 1000000 * 10^18 smallest units
+        EthscriptionsERC20(tokenAddress).initialize(
+            name,
+            symbol,
+            deployOp.maxSupply * 10**18,
+            txHash
         );
+
+        // Store token info
+        tokensByTick[tickKey] = TokenInfo({
+            tokenContract: tokenAddress,
+            deployTxHash: txHash,
+            tick: deployOp.tick,
+            maxSupply: deployOp.maxSupply,
+            mintAmount: deployOp.mintAmount,
+            totalMinted: 0
+        });
+
+        // Map deploy hash to tick key for lookups
+        deployToTick[txHash] = tickKey;
+
+        emit TokenDeployed(txHash, tokenAddress, deployOp.tick, deployOp.maxSupply, deployOp.mintAmount);
     }
 
     /// @notice Handle mint operation
@@ -301,57 +327,5 @@ contract TokenManager is IProtocolHandler {
     function _getTickKey(string memory tick) private pure returns (bytes32) {
         // Use the protocol name from this handler
         return keccak256(abi.encode("erc-20", tick));
-    }
-
-    /// @notice Deploy a new token
-    /// @param deployTxHash The deployment transaction hash
-    /// @param tickKey The tick key for storage
-    /// @param protocol The protocol name
-    /// @param tick The token tick symbol
-    /// @param maxSupply The maximum supply (in user units)
-    /// @param mintAmount The amount per mint (in user units)
-    function _deployToken(
-        bytes32 deployTxHash,
-        bytes32 tickKey,
-        string memory protocol,
-        string memory tick,
-        uint256 maxSupply,
-        uint256 mintAmount
-    ) private {
-        if (maxSupply == 0) revert InvalidMaxSupply();
-        if (mintAmount == 0) revert InvalidMintAmount();
-        if (maxSupply % mintAmount != 0) revert MaxSupplyNotDivisibleByMintAmount();
-
-        // Deploy ERC20 clone with CREATE2 using tickKey as salt for deterministic address
-        address tokenAddress = erc20Template.cloneDeterministic(tickKey);
-
-        // Initialize the clone
-        string memory name = string.concat(protocol, " ", tick);
-        string memory symbol = LibString.upper(tick);
-
-        // Initialize with max supply in 18 decimals
-        // User maxSupply "1000000" means 1000000 * 10^18 smallest units
-        EthscriptionsERC20(tokenAddress).initialize(
-            name,
-            symbol,
-            maxSupply * 10**18,
-            deployTxHash
-        );
-
-        // Store token info
-        tokensByTick[tickKey] = TokenInfo({
-            tokenContract: tokenAddress,
-            deployTxHash: deployTxHash,
-            protocol: protocol,
-            tick: tick,
-            maxSupply: maxSupply,
-            mintAmount: mintAmount,
-            totalMinted: 0
-        });
-
-        // Map deploy hash to tick key for lookups
-        deployToTick[deployTxHash] = tickKey;
-
-        emit TokenDeployed(deployTxHash, tokenAddress, tick, maxSupply, mintAmount);
     }
 }
