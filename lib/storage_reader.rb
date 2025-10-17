@@ -105,17 +105,11 @@ class StorageReader
       ethscription_data = decoded[0]
       content_data = decoded[1]
 
-      # Derive media_type and mime_subtype from mimetype
-      mimetype = ethscription_data[6]  # mimetype is at index 6
-      media_type, mime_subtype = mimetype.split('/', 2) if mimetype
-
       {
         # Content fields
         content_uri_hash: '0x' + ethscription_data[0].unpack1('H*'),
         content_sha: '0x' + ethscription_data[1].unpack1('H*'),
-        mimetype: mimetype,
-        media_type: media_type,
-        mime_subtype: mime_subtype,
+        mimetype: ethscription_data[6],  # mimetype at index 6
         esip6: ethscription_data[9],  # bool at index 9
 
         # Main fields
@@ -161,17 +155,11 @@ class StorageReader
       # The struct is returned as an array
       ethscription_data = decoded[0]
 
-      # Derive media_type and mime_subtype from mimetype
-      mimetype = ethscription_data[6]  # mimetype is at index 6
-      media_type, mime_subtype = mimetype.split('/', 2) if mimetype
-
       {
         # Content fields
         content_uri_hash: '0x' + ethscription_data[0].unpack1('H*'),
         content_sha: '0x' + ethscription_data[1].unpack1('H*'),
-        mimetype: mimetype,
-        media_type: media_type,
-        mime_subtype: mime_subtype,
+        mimetype: ethscription_data[6],  # mimetype at index 6
         esip6: ethscription_data[9],  # bool at index 9
 
         # Main fields
