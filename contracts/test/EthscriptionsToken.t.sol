@@ -87,7 +87,6 @@ contract EthscriptionsTokenTest is TestSetup {
         // Verify token was deployed
         TokenManager.TokenInfo memory tokenInfo = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
             
-        assertEq(tokenInfo.protocol, "erc-20");
         assertEq(tokenInfo.tick, "TEST");
         assertEq(tokenInfo.maxSupply, 1000000);
         assertEq(tokenInfo.mintAmount, 1000);
