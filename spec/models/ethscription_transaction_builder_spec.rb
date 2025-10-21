@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe EthscriptionTransactionBuilder do
+RSpec.describe "EthscriptionTransactionBuilder" do
   describe '.extract_token_params' do
     it 'extracts deploy operation params' do
       content_uri = 'data:,{"p":"erc-20","op":"deploy","tick":"eths","max":"21000000","lim":"1000"}'

@@ -46,7 +46,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
         return txHash;
     }
 
-    function test_TransferMultipleEthscriptions_Success() public {
+    function test_TransferEthscriptions_Success() public {
         // Create 5 ethscriptions owned by alice
         bytes32[] memory hashes = new bytes32[](5);
         for (uint256 i = 0; i < 5; i++) {
@@ -55,7 +55,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
 
         // Alice transfers all 5 to bob
         vm.prank(alice);
-        uint256 successCount = ethscriptions.transferMultipleEthscriptions(hashes, bob);
+        uint256 successCount = ethscriptions.transferEthscriptions(bob, hashes);
 
         assertEq(successCount, 5, "Should have 5 successful transfers");
 
@@ -66,7 +66,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
         }
     }
 
-    function test_TransferMultipleEthscriptions_PartialSuccess() public {
+    function test_TransferEthscriptions_PartialSuccess() public {
         // Create 5 ethscriptions - 3 owned by alice, 2 owned by bob
         bytes32[] memory hashes = new bytes32[](5);
         for (uint256 i = 0; i < 3; i++) {
@@ -78,7 +78,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
 
         // Alice tries to transfer all 5 to charlie (but only owns 3)
         vm.prank(alice);
-        uint256 successCount = ethscriptions.transferMultipleEthscriptions(hashes, charlie);
+        uint256 successCount = ethscriptions.transferEthscriptions(charlie, hashes);
 
         assertEq(successCount, 3, "Should have 3 successful transfers");
 
@@ -93,7 +93,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
         }
     }
 
-    function test_TransferMultipleEthscriptions_NoSuccessReverts() public {
+    function test_TransferEthscriptions_NoSuccessReverts() public {
         // Create 3 ethscriptions owned by bob
         bytes32[] memory hashes = new bytes32[](3);
         for (uint256 i = 0; i < 3; i++) {
@@ -103,10 +103,10 @@ contract EthscriptionsMultiTransferTest is TestSetup {
         // Alice tries to transfer them (but owns none)
         vm.prank(alice);
         vm.expectRevert(Ethscriptions.NoSuccessfulTransfers.selector);
-        ethscriptions.transferMultipleEthscriptions(hashes, charlie);
+        ethscriptions.transferEthscriptions(charlie, hashes);
     }
 
-    function test_TransferMultipleEthscriptions_Burn() public {
+    function test_TransferEthscriptions_Burn() public {
         // Create 3 ethscriptions owned by alice
         bytes32[] memory hashes = new bytes32[](3);
         for (uint256 i = 0; i < 3; i++) {
@@ -115,7 +115,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
 
         // Alice burns all 3 by transferring to address(0)
         vm.prank(alice);
-        uint256 successCount = ethscriptions.transferMultipleEthscriptions(hashes, address(0));
+        uint256 successCount = ethscriptions.transferEthscriptions(address(0), hashes);
 
         assertEq(successCount, 3, "Should have 3 successful burns");
 
@@ -125,7 +125,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
         }
     }
 
-    function test_TransferMultipleEthscriptions_EmitsEvents() public {
+    function test_TransferEthscriptions_EmitsEvents() public {
         // Create 2 ethscriptions owned by alice
         bytes32[] memory hashes = new bytes32[](2);
         for (uint256 i = 0; i < 2; i++) {
@@ -145,7 +145,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
 
         // Alice transfers both to bob
         vm.prank(alice);
-        ethscriptions.transferMultipleEthscriptions(hashes, bob);
+        ethscriptions.transferEthscriptions(bob, hashes);
     }
 
     function test_TokenURI_ReturnsValidJSON() public {

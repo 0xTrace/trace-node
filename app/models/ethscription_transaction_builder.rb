@@ -106,18 +106,31 @@ class EthscriptionTransactionBuilder
 
     return unless valid_length
 
-    # Parse all 32-byte hashes for a single multi-transfer call
+    # Parse all 32-byte hashes
     ids = input_hex.scan(/.{64}/).map { |hash_hex| normalize_hash("0x#{hash_hex}") }
     return if ids.empty?
 
-    transaction = EthscriptionTransaction.transfer_multiple_ethscriptions(
+    # Common transfer parameters
+    base_params = {
       eth_transaction: @eth_tx,
       from_address: normalize_address(@eth_tx.from_address),
       to_address: normalize_address(@eth_tx.to_address),
-      ethscription_ids: ids,
       source_type: :input,
       source_index: @eth_tx.transaction_index
-    )
+    }
+
+    # Use appropriate factory method based on count
+    transaction = if ids.length == 1
+      EthscriptionTransaction.transfer_ethscription(
+        **base_params,
+        ethscription_id: ids.first
+      )
+    else
+      EthscriptionTransaction.transfer_multiple_ethscriptions(
+        **base_params,
+        ethscription_ids: ids
+      )
+    end
 
     @transactions << transaction
   end

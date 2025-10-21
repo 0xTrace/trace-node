@@ -263,7 +263,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         bytes32 transactionHash
     ) external requireExists(transactionHash) {
         // Get the ethscription number to use as token ID
-        Ethscription memory etsc = ethscriptions[transactionHash];
+        Ethscription storage etsc = ethscriptions[transactionHash];
         uint256 tokenId = etsc.ethscriptionNumber;
         // Standard ERC721 transfer will handle authorization
         transferFrom(msg.sender, to, tokenId);
@@ -279,16 +279,15 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         bytes32 transactionHash,
         address previousOwner
     ) external requireExists(transactionHash) {
+        Ethscription storage etsc = ethscriptions[transactionHash];
+
         // Verify the previous owner matches
-        if (ethscriptions[transactionHash].previousOwner != previousOwner) {
+        if (etsc.previousOwner != previousOwner) {
             revert PreviousOwnerMismatch();
         }
 
-        // Get the ethscription number to use as token ID
-        Ethscription memory etsc = ethscriptions[transactionHash];
-        uint256 tokenId = etsc.ethscriptionNumber;
         // Use transferFrom which now handles burns when to == address(0)
-        transferFrom(msg.sender, to, tokenId);
+        transferFrom(msg.sender, to, etsc.ethscriptionNumber);
     }
 
     /// @notice Transfer multiple ethscriptions to a single recipient
@@ -296,14 +295,14 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     /// @param transactionHashes Array of ethscription hashes to transfer
     /// @param to The recipient address (can be address(0) for burning)
     /// @return successCount Number of successful transfers
-    function transferMultipleEthscriptions(
-        bytes32[] calldata transactionHashes,
-        address to
+    function transferEthscriptions(
+        address to,
+        bytes32[] calldata transactionHashes
     ) external returns (uint256 successCount) {
         for (uint256 i = 0; i < transactionHashes.length; i++) {
             // Get the ethscription to find its token ID
             if (!_ethscriptionExists(transactionHashes[i])) continue; // Skip non-existent ethscriptions
-            Ethscription memory etsc = ethscriptions[transactionHashes[i]];
+            Ethscription storage etsc = ethscriptions[transactionHashes[i]];
 
             uint256 tokenId = etsc.ethscriptionNumber;
 
