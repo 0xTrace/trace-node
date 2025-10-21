@@ -17,7 +17,7 @@ contract TestTokenUri is Script {
         // Test case 1: Plain text (should use viewer)
         vm.prank(address(0x1111));
         eth.createEthscription(Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("text1"),
+            ethscriptionId: keccak256("text1"),
             contentUriHash: keccak256("data:text/plain,Hello World!"),
             initialOwner: address(0x1111),
             content: bytes("Hello World!"),
@@ -29,7 +29,7 @@ contract TestTokenUri is Script {
         // Test case 2: JSON content (should use viewer with pretty print)
         vm.prank(address(0x2222));
         eth.createEthscription(Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("json1"),
+            ethscriptionId: keccak256("json1"),
             contentUriHash: keccak256('data:application/json,{"p":"erc-20","op":"mint","tick":"test","amt":"1000"}'),
             initialOwner: address(0x2222),
             content: bytes('{"p":"erc-20","op":"mint","tick":"test","amt":"1000"}'),
@@ -41,7 +41,7 @@ contract TestTokenUri is Script {
         // Test case 3: HTML content (should pass through directly)
         vm.prank(address(0x3333));
         eth.createEthscription(Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("html1"),
+            ethscriptionId: keccak256("html1"),
             contentUriHash: keccak256('data:text/html,<html><body style="background:linear-gradient(45deg,#ff006e,#8338ec);color:white;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><h1>Ethscriptions Rule!</h1></body></html>'),
             initialOwner: address(0x3333),
             content: bytes('<html><body style="background:linear-gradient(45deg,#ff006e,#8338ec);color:white;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><h1>Ethscriptions Rule!</h1></body></html>'),
@@ -54,7 +54,7 @@ contract TestTokenUri is Script {
         bytes memory redPixelPng = Base64.decode("iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAm0lEQVR42mNgGITgPxTTxvBleTo0swBsOK0s+N8aJkczC1AMR7KAKpb8v72xAY5hFsD4lFoCN+j56ZUoliBbSoklGIZjwxRbQAjT1YK7d+82kGUBeuQii5FrAYYrL81NwCpGFQtoEUT/6RoHWAyknQV0S6ZI5RE6Jt8CZIOOHTuGgR9Fq5FkCf19QM3wx5rZKHEtsRZQt5qkhgUAR6cGaUehOD4AAAAASUVORK5CYII=");
         vm.prank(address(0x4444));
         eth.createEthscription(Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("image1"),
+            ethscriptionId: keccak256("image1"),
             contentUriHash: keccak256("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAm0lEQVR42mNgGITgPxTTxvBleTo0swBsOK0s+N8aJkczC1AMR7KAKpb8v72xAY5hFsD4lFoCN+j56ZUoliBbSoklGIZjwxRbQAjT1YK7d+82kGUBeuQii5FrAYYrL81NwCpGFQtoEUT/6RoHWAyknQV0S6ZI5RE6Jt8CZIOOHTuGgR9Fq5FkCf19QM3wx5rZKHEtsRZQt5qkhgUAR6cGaUehOD4AAAAASUVORK5CYII="),
             initialOwner: address(0x4444),
             content: redPixelPng,
@@ -66,7 +66,7 @@ contract TestTokenUri is Script {
         // Test case 5: CSS content (should use viewer)
         vm.prank(address(0x5555));
         eth.createEthscription(Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("css1"),
+            ethscriptionId: keccak256("css1"),
             contentUriHash: keccak256("data:text/css,body { background: #000; color: #0f0; font-family: 'Courier New'; }"),
             initialOwner: address(0x5555),
             content: bytes("body { background: #000; color: #0f0; font-family: 'Courier New'; }"),

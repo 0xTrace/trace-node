@@ -21,7 +21,7 @@ contract TokenManager is IProtocolHandler {
 
     struct TokenInfo {
         address tokenContract;
-        bytes32 deployTxHash;
+        bytes32 deployEthscriptionId;
         string tick;
         uint256 maxSupply;
         uint256 mintAmount;
@@ -29,8 +29,8 @@ contract TokenManager is IProtocolHandler {
     }
 
     struct TokenItem {
-        bytes32 deployTxHash;  // Which token this ethscription belongs to
-        uint256 amount;        // How many tokens this ethscription represents
+        bytes32 deployEthscriptionId;  // Which token this ethscription belongs to
+        uint256 amount;                 // How many tokens this ethscription represents
     }
 
     // Protocol operation structs for cleaner decoding
@@ -60,8 +60,8 @@ contract TokenManager is IProtocolHandler {
     /// @dev Track deployed tokens by protocol+tick for find-or-create
     mapping(bytes32 => TokenInfo) internal tokensByTick;  // keccak256(abi.encode(protocol, tick)) => TokenInfo
 
-    /// @dev Map deploy transaction hash to tick key for lookups
-    mapping(bytes32 => bytes32) public deployToTick;    // deployTxHash => tickKey
+    /// @dev Map deploy ethscription ID to tick key for lookups
+    mapping(bytes32 => bytes32) public deployToTick;    // deployEthscriptionId => tickKey
 
     /// @dev Track which ethscription is a token item
     mapping(bytes32 => TokenItem) internal tokenItems;    // ethscription tx hash => TokenItem
@@ -84,7 +84,7 @@ contract TokenManager is IProtocolHandler {
     // =============================================================
 
     event TokenDeployed(
-        bytes32 indexed deployTxHash,
+        bytes32 indexed deployEthscriptionId,
         address indexed tokenAddress,
         string tick,
         uint256 maxSupply,
@@ -92,18 +92,18 @@ contract TokenManager is IProtocolHandler {
     );
 
     event TokenMinted(
-        bytes32 indexed deployTxHash,
+        bytes32 indexed deployEthscriptionId,
         address indexed to,
         uint256 amount,
-        bytes32 ethscriptionTxHash
+        bytes32 ethscriptionId
     );
 
     event TokenTransferred(
-        bytes32 indexed deployTxHash,
+        bytes32 indexed deployEthscriptionId,
         address indexed from,
         address indexed to,
         uint256 amount,
-        bytes32 ethscriptionTxHash
+        bytes32 ethscriptionId
     );
 
     // =============================================================
@@ -120,9 +120,9 @@ contract TokenManager is IProtocolHandler {
     // =============================================================
 
     /// @notice Handle deploy operation
-    /// @param txHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID
     /// @param data The encoded DeployOperation data
-    function op_deploy(bytes32 txHash, bytes calldata data) external virtual onlyEthscriptions {
+    function op_deploy(bytes32 ethscriptionId, bytes calldata data) external virtual onlyEthscriptions {
         // Decode the operation data
         DeployOperation memory deployOp = abi.decode(data, (DeployOperation));
 
@@ -130,7 +130,7 @@ contract TokenManager is IProtocolHandler {
         TokenInfo storage token = tokensByTick[tickKey];
 
         // Revert if token already exists
-        if (token.deployTxHash != bytes32(0)) revert TokenAlreadyDeployed();
+        if (token.deployEthscriptionId != bytes32(0)) revert TokenAlreadyDeployed();
 
         // Validate deployment parameters
         if (deployOp.maxSupply == 0) revert InvalidMaxSupply();
@@ -150,29 +150,29 @@ contract TokenManager is IProtocolHandler {
             name,
             symbol,
             deployOp.maxSupply * 10**18,
-            txHash
+            ethscriptionId
         );
 
         // Store token info
         tokensByTick[tickKey] = TokenInfo({
             tokenContract: tokenAddress,
-            deployTxHash: txHash,
+            deployEthscriptionId: ethscriptionId,
             tick: deployOp.tick,
             maxSupply: deployOp.maxSupply,
             mintAmount: deployOp.mintAmount,
             totalMinted: 0
         });
 
-        // Map deploy hash to tick key for lookups
-        deployToTick[txHash] = tickKey;
+        // Map deploy ID to tick key for lookups
+        deployToTick[ethscriptionId] = tickKey;
 
-        emit TokenDeployed(txHash, tokenAddress, deployOp.tick, deployOp.maxSupply, deployOp.mintAmount);
+        emit TokenDeployed(ethscriptionId, tokenAddress, deployOp.tick, deployOp.maxSupply, deployOp.mintAmount);
     }
 
     /// @notice Handle mint operation
-    /// @param txHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID
     /// @param data The encoded MintOperation data
-    function op_mint(bytes32 txHash, bytes calldata data) external virtual onlyEthscriptions {
+    function op_mint(bytes32 ethscriptionId, bytes calldata data) external virtual onlyEthscriptions {
         // Decode the operation data
         MintOperation memory mintOp = abi.decode(data, (MintOperation));
 
@@ -180,7 +180,7 @@ contract TokenManager is IProtocolHandler {
         TokenInfo storage token = tokensByTick[tickKey];
 
         // Token must exist to mint
-        if (token.deployTxHash == bytes32(0)) revert TokenNotDeployed();
+        if (token.deployEthscriptionId == bytes32(0)) revert TokenNotDeployed();
 
         // Validate mint amount matches token's configured limit
         if (mintOp.amount != token.mintAmount) revert MintAmountMismatch();
@@ -192,12 +192,12 @@ contract TokenManager is IProtocolHandler {
 
         // Get the initial owner from the Ethscriptions contract
         Ethscriptions ethscriptionsContract = Ethscriptions(ethscriptions);
-        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(txHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(ethscriptionId);
         address initialOwner = ethscription.initialOwner;
 
         // Track this ethscription as a token item
-        tokenItems[txHash] = TokenItem({
-            deployTxHash: token.deployTxHash,
+        tokenItems[ethscriptionId] = TokenItem({
+            deployEthscriptionId: token.deployEthscriptionId,
             amount: mintOp.amount
         });
 
@@ -207,42 +207,42 @@ contract TokenManager is IProtocolHandler {
         // Update total minted after successful mint
         token.totalMinted += mintOp.amount;
 
-        emit TokenMinted(token.deployTxHash, initialOwner, mintOp.amount, txHash);
+        emit TokenMinted(token.deployEthscriptionId, initialOwner, mintOp.amount, ethscriptionId);
     }
 
     /// @notice Handle transfer notification from Ethscriptions contract
     /// @dev Implementation of IProtocolHandler interface
-    /// @param txHash The ethscription transaction hash being transferred
+    /// @param ethscriptionId The ethscription ID being transferred
     /// @param from The address transferring from
     /// @param to The address transferring to
     function onTransfer(
-        bytes32 txHash,
+        bytes32 ethscriptionId,
         address from,
         address to
     ) external virtual override onlyEthscriptions {
-        TokenItem memory item = tokenItems[txHash];
+        TokenItem memory item = tokenItems[ethscriptionId];
 
         // Not a token item, nothing to do
-        if (item.deployTxHash == bytes32(0)) return;
+        if (item.deployEthscriptionId == bytes32(0)) return;
 
-        bytes32 tickKey = deployToTick[item.deployTxHash];
+        bytes32 tickKey = deployToTick[item.deployEthscriptionId];
         TokenInfo storage token = tokensByTick[tickKey];
 
         // Force transfer tokens (shadow transfer) - convert to 18 decimals
         EthscriptionsERC20(token.tokenContract).forceTransfer(from, to, item.amount * 10**18);
 
-        emit TokenTransferred(item.deployTxHash, from, to, item.amount, txHash);
+        emit TokenTransferred(item.deployEthscriptionId, from, to, item.amount, ethscriptionId);
     }
 
     // =============================================================
     //                  EXTERNAL VIEW FUNCTIONS
     // =============================================================
 
-    /// @notice Get token contract address by deploy transaction hash
-    /// @param deployTxHash The deployment transaction hash
+    /// @notice Get token contract address by deploy ethscription ID
+    /// @param deployEthscriptionId The deployment ethscription ID
     /// @return The token contract address
-    function getTokenAddress(bytes32 deployTxHash) external view returns (address) {
-        bytes32 tickKey = deployToTick[deployTxHash];
+    function getTokenAddress(bytes32 deployEthscriptionId) external view returns (address) {
+        bytes32 tickKey = deployToTick[deployEthscriptionId];
         return tokensByTick[tickKey].tokenContract;
     }
 
@@ -254,11 +254,11 @@ contract TokenManager is IProtocolHandler {
         return tokensByTick[tickKey].tokenContract;
     }
 
-    /// @notice Get complete token information by deploy transaction hash
-    /// @param deployTxHash The deployment transaction hash
+    /// @notice Get complete token information by deploy ethscription ID
+    /// @param deployEthscriptionId The deployment ethscription ID
     /// @return The TokenInfo struct
-    function getTokenInfo(bytes32 deployTxHash) external view returns (TokenInfo memory) {
-        bytes32 tickKey = deployToTick[deployTxHash];
+    function getTokenInfo(bytes32 deployEthscriptionId) external view returns (TokenInfo memory) {
+        bytes32 tickKey = deployToTick[deployEthscriptionId];
         return tokensByTick[tickKey];
     }
 
@@ -286,24 +286,24 @@ contract TokenManager is IProtocolHandler {
     }
 
     /// @notice Check if an ethscription is a token item
-    /// @param ethscriptionTxHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID
     /// @return True if the ethscription represents tokens
-    function isTokenItem(bytes32 ethscriptionTxHash) external view returns (bool) {
-        return tokenItems[ethscriptionTxHash].deployTxHash != bytes32(0);
+    function isTokenItem(bytes32 ethscriptionId) external view returns (bool) {
+        return tokenItems[ethscriptionId].deployEthscriptionId != bytes32(0);
     }
 
     /// @notice Get token amount for an ethscription
-    /// @param ethscriptionTxHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID
     /// @return The amount of tokens this ethscription represents
-    function getTokenAmount(bytes32 ethscriptionTxHash) external view returns (uint256) {
-        return tokenItems[ethscriptionTxHash].amount;
+    function getTokenAmount(bytes32 ethscriptionId) external view returns (uint256) {
+        return tokenItems[ethscriptionId].amount;
     }
 
     /// @notice Get complete token item information
-    /// @param ethscriptionTxHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID
     /// @return The TokenItem struct
-    function getTokenItem(bytes32 ethscriptionTxHash) external view returns (TokenItem memory) {
-        return tokenItems[ethscriptionTxHash];
+    function getTokenItem(bytes32 ethscriptionId) external view returns (TokenItem memory) {
+        return tokenItems[ethscriptionId];
     }
 
     // =============================================================

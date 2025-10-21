@@ -36,7 +36,7 @@ contract CollectionsManager is IProtocolHandler {
     // Runtime state for a collection (separate from metadata)
     struct CollectionState {
         address collectionContract;
-        bytes32 createTxHash;
+        bytes32 createEthscriptionId;
         uint256 currentSize;
         bool locked;
     }
@@ -135,7 +135,7 @@ contract CollectionsManager is IProtocolHandler {
     event CollectionLocked(bytes32 indexed collectionId);
 
     // Mirror success signaling so indexers can detect success without relying on router
-    event ProtocolHandlerSuccess(bytes32 indexed transactionHash, string protocol);
+    event ProtocolHandlerSuccess(bytes32 indexed ethscriptionId, string protocol);
 
     modifier onlyEthscriptions() {
         require(msg.sender == ethscriptions, "Only Ethscriptions contract");
@@ -169,7 +169,7 @@ contract CollectionsManager is IProtocolHandler {
         // Store collection state
         collectionState[collectionId] = CollectionState({
             collectionContract: collectionContract,
-            createTxHash: txHash,
+            createEthscriptionId: txHash,
             currentSize: 0,
             locked: false
         });
@@ -408,7 +408,7 @@ contract CollectionsManager is IProtocolHandler {
     /// @notice Handle transfer notification from Ethscriptions contract
     /// @dev When an ethscription that's part of a collection is transferred, sync the ERC721
     function onTransfer(
-        bytes32 txHash,
+        bytes32 ethscriptionId,
         address from,
         address to
     ) external override onlyEthscriptions {

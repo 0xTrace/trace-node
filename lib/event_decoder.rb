@@ -111,9 +111,9 @@ class EventDecoder
     def decode_protocol_transfer(log, metadata = {})
       return nil unless log['topics']&.size >= 4
 
-      # Event EthscriptionTransferred(bytes32 indexed transactionHash, address indexed from, address indexed to, uint256 ethscriptionNumber)
+      # Event EthscriptionTransferred(bytes32 indexed ethscriptionId, address indexed from, address indexed to, uint256 ethscriptionNumber)
       # First 3 parameters are indexed, last one is in data
-      tx_hash = log['topics'][1]&.downcase  # bytes32 transactionHash
+      tx_hash = log['topics'][1]&.downcase  # bytes32 ethscriptionId
       from = decode_address_from_topic(log['topics'][2])
       to = decode_address_from_topic(log['topics'][3])
 

@@ -41,7 +41,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: COLLECTION_TX_HASH,
+            ethscriptionId: COLLECTION_TX_HASH,
             contentUriHash: sha256(bytes(collectionContent)),
             initialOwner: alice,
             content: bytes(collectionContent),
@@ -121,7 +121,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory itemParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: ITEM1_TX_HASH,
+            ethscriptionId: ITEM1_TX_HASH,
             contentUriHash: sha256(bytes(itemContent)),
             initialOwner: alice,
             content: bytes(itemContent),
@@ -215,7 +215,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory removeParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0xFEED)),
+            ethscriptionId: bytes32(uint256(0xFEED)),
             contentUriHash: sha256(bytes(removeContent)),
             initialOwner: alice,
             content: bytes(removeContent),
@@ -256,7 +256,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory removeParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0xBAD)),
+            ethscriptionId: bytes32(uint256(0xBAD)),
             contentUriHash: sha256(bytes("data:,remove")),
             initialOwner: bob,
             content: bytes("remove"),
@@ -318,7 +318,7 @@ contract CollectionsManagerTest is TestSetup {
             });
 
             Ethscriptions.CreateEthscriptionParams memory itemParams = Ethscriptions.CreateEthscriptionParams({
-                transactionHash: itemHashes[i],
+                ethscriptionId: itemHashes[i],
                 contentUriHash: sha256(abi.encodePacked("item", i)),
                 initialOwner: owners[i],
                 content: abi.encodePacked("item", i),
@@ -393,7 +393,7 @@ contract CollectionsManagerTest is TestSetup {
 
         // Create the ethscription with image content
         Ethscriptions.CreateEthscriptionParams memory itemParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: ITEM1_TX_HASH,
+            ethscriptionId: ITEM1_TX_HASH,
             contentUriHash: sha256(bytes(imageContent)),
             initialOwner: alice,
             content: bytes(imageContent),
@@ -462,7 +462,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0xED171)),
+            ethscriptionId: bytes32(uint256(0xED171)),
             contentUriHash: sha256(bytes("edit")),
             initialOwner: alice,
             content: bytes("edit"),
@@ -499,7 +499,7 @@ contract CollectionsManagerTest is TestSetup {
         // First create the ethscription that we'll add to the collection
         vm.prank(alice);
         Ethscriptions.CreateEthscriptionParams memory itemCreationParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: ITEM1_TX_HASH,
+            ethscriptionId: ITEM1_TX_HASH,
             contentUriHash: sha256(bytes("item content")),
             initialOwner: alice,
             content: bytes("item content"),
@@ -535,7 +535,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory addParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0xADD1733)),
+            ethscriptionId: bytes32(uint256(0xADD1733)),
             contentUriHash: sha256(bytes("add")),
             initialOwner: alice,
             content: bytes("add"),
@@ -564,7 +564,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0xED172)),
+            ethscriptionId: bytes32(uint256(0xED172)),
             contentUriHash: sha256(bytes("partial-edit")),
             initialOwner: alice,
             content: bytes("partial-edit"),
@@ -607,7 +607,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0xBADED17)),
+            ethscriptionId: bytes32(uint256(0xBADED17)),
             contentUriHash: sha256(bytes("bad-edit")),
             initialOwner: bob,
             content: bytes("bad-edit"),
@@ -645,7 +645,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x901743)),
+            ethscriptionId: bytes32(uint256(0x901743)),
             contentUriHash: sha256(bytes("no-item")),
             initialOwner: alice,
             content: bytes("no-item"),
@@ -694,7 +694,7 @@ contract CollectionsManagerTest is TestSetup {
         ethscriptionIds[0] = ITEM1_TX_HASH;
 
         Ethscriptions.CreateEthscriptionParams memory syncParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x5914C)),
+            ethscriptionId: bytes32(uint256(0x5914C)),
             contentUriHash: sha256(bytes("sync")),
             initialOwner: charlie,
             content: bytes("sync"),
@@ -741,7 +741,7 @@ contract CollectionsManagerTest is TestSetup {
         ethscriptionIds[1] = ITEM2_TX_HASH;
 
         Ethscriptions.CreateEthscriptionParams memory syncParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x5914CD)),
+            ethscriptionId: bytes32(uint256(0x5914CD)),
             contentUriHash: sha256(bytes("sync-multi")),
             initialOwner: alice,
             content: bytes("sync-multi"),
@@ -771,7 +771,7 @@ contract CollectionsManagerTest is TestSetup {
         ethscriptionIds[0] = bytes32(uint256(0x999999)); // Non-existent in collection
 
         Ethscriptions.CreateEthscriptionParams memory syncParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x5914CE)),
+            ethscriptionId: bytes32(uint256(0x5914CE)),
             contentUriHash: sha256(bytes("sync-nonexistent")),
             initialOwner: alice,
             content: bytes("sync-nonexistent"),
@@ -797,7 +797,7 @@ contract CollectionsManagerTest is TestSetup {
         ethscriptionIds[0] = ITEM1_TX_HASH;
 
         Ethscriptions.CreateEthscriptionParams memory syncParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x5914CF)),
+            ethscriptionId: bytes32(uint256(0x5914CF)),
             contentUriHash: sha256(bytes("sync-fake")),
             initialOwner: alice,
             content: bytes("sync-fake"),
@@ -825,7 +825,7 @@ contract CollectionsManagerTest is TestSetup {
         vm.prank(alice);
 
         Ethscriptions.CreateEthscriptionParams memory lockParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x10CCC)),
+            ethscriptionId: bytes32(uint256(0x10CCC)),
             contentUriHash: sha256(bytes("lock")),
             initialOwner: alice,
             content: bytes("lock"),
@@ -854,7 +854,7 @@ contract CollectionsManagerTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(0x10C3ED)),
+            ethscriptionId: bytes32(uint256(0x10C3ED)),
             contentUriHash: sha256(bytes("locked-edit")),
             initialOwner: alice,
             content: bytes("locked-edit"),

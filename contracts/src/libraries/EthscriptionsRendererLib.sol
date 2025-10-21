@@ -13,17 +13,17 @@ library EthscriptionsRendererLib {
 
     /// @notice Build attributes JSON array from ethscription data
     /// @param etsc Storage pointer to the ethscription
-    /// @param txHash The transaction hash of the ethscription
+    /// @param ethscriptionId The ethscription ID (L1 tx hash)
     /// @return JSON string of attributes array
-    function buildAttributes(Ethscriptions.Ethscription storage etsc, bytes32 txHash)
+    function buildAttributes(Ethscriptions.Ethscription storage etsc, bytes32 ethscriptionId)
         internal
         view
         returns (string memory)
     {
         // Build in chunks to avoid stack too deep
         string memory part1 = string.concat(
-            '[{"trait_type":"Transaction Hash","value":"',
-            uint256(txHash).toHexString(),
+            '[{"trait_type":"Ethscription ID","value":"',
+            uint256(ethscriptionId).toHexString(),
             '"},{"trait_type":"Ethscription Number","display_type":"number","value":',
             etsc.ethscriptionNumber.toString(),
             '},{"trait_type":"Creator","value":"',
@@ -84,19 +84,19 @@ library EthscriptionsRendererLib {
 
     /// @notice Build complete token URI JSON
     /// @param etsc Storage pointer to the ethscription
-    /// @param txHash The transaction hash of the ethscription
+    /// @param ethscriptionId The ethscription ID (L1 tx hash)
     /// @param content The content bytes
     /// @return The complete base64-encoded data URI
     function buildTokenURI(
         Ethscriptions.Ethscription storage etsc,
-        bytes32 txHash,
+        bytes32 ethscriptionId,
         bytes memory content
     ) internal view returns (string memory) {
         // Get media URI
         (string memory mediaType, string memory mediaUri) = getMediaUri(etsc, content);
 
         // Build attributes
-        string memory attributes = buildAttributes(etsc, txHash);
+        string memory attributes = buildAttributes(etsc, ethscriptionId);
 
         // Build JSON
         string memory json = string.concat(

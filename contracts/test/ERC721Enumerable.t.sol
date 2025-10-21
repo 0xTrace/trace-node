@@ -18,7 +18,7 @@ contract ERC721EnumerableTest is TestSetup {
         vm.prank(creator);
         return ethscriptions.createEthscription(
             Ethscriptions.CreateEthscriptionParams({
-                transactionHash: txHash,
+                ethscriptionId: txHash,
                 contentUriHash: keccak256(bytes(content)),
                 initialOwner: owner,
                 content: bytes(content),

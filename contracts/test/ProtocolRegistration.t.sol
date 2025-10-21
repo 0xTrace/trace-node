@@ -112,7 +112,7 @@ contract ProtocolRegistrationTest is TestSetup {
         bytes32 txHash = bytes32(uint256(0x1234));
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: sha256(bytes('data:,{"p":"mock-protocol","op":"test"}')),
             initialOwner: alice,
             content: bytes('{"p":"mock-protocol","op":"test"}'),
@@ -156,7 +156,7 @@ contract ProtocolRegistrationTest is TestSetup {
 
         // Create ethscription with unregistered protocol
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: sha256(bytes('data:,{"p":"unregistered","op":"test"}')),
             initialOwner: alice,
             content: bytes('{"p":"unregistered","op":"test"}'),

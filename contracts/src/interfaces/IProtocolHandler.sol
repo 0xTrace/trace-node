@@ -6,11 +6,11 @@ pragma solidity 0.8.24;
 /// @dev Handlers process protocol-specific logic for Ethscriptions lifecycle events
 interface IProtocolHandler {
     /// @notice Called when an Ethscription with this protocol is transferred
-    /// @param txHash The transaction hash (Ethscription ID)
+    /// @param ethscriptionId The Ethscription ID (L1 tx hash)
     /// @param from The address transferring the Ethscription
     /// @param to The address receiving the Ethscription
     function onTransfer(
-        bytes32 txHash,
+        bytes32 ethscriptionId,
         address from,
         address to
     ) external;

@@ -199,7 +199,7 @@ class EthscriptionTransaction < T::Struct
 
     # Encode parameters
     params = [
-      tx_hash_bin,                            # bytes32 transactionHash
+      tx_hash_bin,                            # bytes32 ethscriptionId (L1 tx hash)
       content_uri_hash,                        # bytes32 contentUriHash
       owner_bin,                               # address
       raw_content,                             # bytes content

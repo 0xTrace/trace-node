@@ -13,11 +13,11 @@ import "forge-std/console.sol";
 /// @dev Used only during genesis, then replaced with the real Ethscriptions contract
 contract GenesisEthscriptions is Ethscriptions {
 
-    /// @notice Store a genesis ethscription transaction hash for later event emission
+    /// @notice Store a genesis ethscription ID for later event emission
     /// @dev Internal function only used during genesis setup
-    /// @param transactionHash The transaction hash to store
-    function _storePendingGenesisEvent(bytes32 transactionHash) internal {
-        pendingGenesisEvents.push(transactionHash);
+    /// @param ethscriptionId The ethscription ID (L1 tx hash) to store
+    function _storePendingGenesisEvent(bytes32 ethscriptionId) internal {
+        pendingGenesisEvents.push(ethscriptionId);
     }
 
     /// @notice Create an ethscription with all values explicitly set for genesis
@@ -29,7 +29,7 @@ contract GenesisEthscriptions is Ethscriptions {
         bytes32 l1BlockHash
     ) public returns (uint256 tokenId) {
         require(creator != address(0), "Invalid creator");
-        require(ethscriptions[params.transactionHash].creator == address(0), "Ethscription already exists");
+        require(ethscriptions[params.ethscriptionId].creator == address(0), "Ethscription already exists");
 
         // Check protocol uniqueness using content URI hash
         if (firstEthscriptionByContentUri[params.contentUriHash] != bytes32(0)) {
@@ -40,10 +40,10 @@ contract GenesisEthscriptions is Ethscriptions {
         bytes32 contentSha = _storeContent(params.content);
 
         // Mark content URI as used by storing this ethscription's tx hash
-        firstEthscriptionByContentUri[params.contentUriHash] = params.transactionHash;
+        firstEthscriptionByContentUri[params.contentUriHash] = params.ethscriptionId;
 
         // Set all values including genesis-specific ones
-        ethscriptions[params.transactionHash] = Ethscription({
+        ethscriptions[params.ethscriptionId] = Ethscription({
             // Fixed-size fields
             contentUriHash: params.contentUriHash,
             contentSha: contentSha,
@@ -66,8 +66,8 @@ contract GenesisEthscriptions is Ethscriptions {
         // Use ethscription number as token ID
         tokenId = totalSupply();
 
-        // Store the mapping from token ID to transaction hash
-        tokenIdToTransactionHash[tokenId] = params.transactionHash;
+        // Store the mapping from token ID to ethscription ID
+        tokenIdToEthscriptionId[tokenId] = params.ethscriptionId;
 
         // Token count is automatically tracked by enumerable's _update
 
@@ -82,7 +82,7 @@ contract GenesisEthscriptions is Ethscriptions {
         // Store the transaction hash so all events can be emitted later
         // The emission logic in _emitPendingGenesisEvents will figure out
         // what events to emit based on the ethscription data
-        _storePendingGenesisEvent(params.transactionHash);
+        _storePendingGenesisEvent(params.ethscriptionId);
 
         // Skip token handling for genesis
     }
@@ -333,7 +333,7 @@ contract L2Genesis is Script {
         // Create params struct with parsed data from JSON
         // The JSON already has all the properly processed data
         Ethscriptions.CreateEthscriptionParams memory params;
-        params.transactionHash = vm.parseJsonBytes32(json, string.concat(basePath, ".transaction_hash"));
+        params.ethscriptionId = vm.parseJsonBytes32(json, string.concat(basePath, ".transaction_hash"));
         params.contentUriHash = vm.parseJsonBytes32(json, string.concat(basePath, ".content_uri_hash"));
         params.initialOwner = initialOwner;
         params.content = vm.parseJsonBytes(json, string.concat(basePath, ".content"));

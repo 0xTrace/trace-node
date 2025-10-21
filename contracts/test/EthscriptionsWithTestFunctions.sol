@@ -12,26 +12,26 @@ contract EthscriptionsWithTestFunctions is Ethscriptions {
 
     /// @notice Get the number of content pointers for an ethscription
     /// @dev Test-only function to inspect storage chunks
-    function getContentPointerCount(bytes32 transactionHash) external view requireExists(transactionHash) returns (uint256) {
-        Ethscription storage etsc = ethscriptions[transactionHash];
-        return contentPointersBySha[etsc.contentSha].length;
+    function getContentPointerCount(bytes32 ethscriptionId) external view returns (uint256) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        return contentPointersBySha[ethscription.contentSha].length;
     }
 
     /// @notice Get all content pointers for an ethscription
     /// @dev Test-only function to inspect SSTORE2 addresses
-    function getContentPointers(bytes32 transactionHash) external view requireExists(transactionHash) returns (address[] memory) {
-        Ethscription storage etsc = ethscriptions[transactionHash];
-        return contentPointersBySha[etsc.contentSha];
+    function getContentPointers(bytes32 ethscriptionId) external view returns (address[] memory) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        return contentPointersBySha[ethscription.contentSha];
     }
 
     /// @notice Read a specific chunk of content
     /// @dev Test-only function to read individual SSTORE2 chunks
-    /// @param transactionHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID (L1 tx hash)
     /// @param index The chunk index to read
     /// @return The chunk data
-    function readChunk(bytes32 transactionHash, uint256 index) external view requireExists(transactionHash) returns (bytes memory) {
-        Ethscription storage etsc = ethscriptions[transactionHash];
-        address[] storage pointers = contentPointersBySha[etsc.contentSha];
+    function readChunk(bytes32 ethscriptionId, uint256 index) external view returns (bytes memory) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        address[] storage pointers = contentPointersBySha[ethscription.contentSha];
         require(index < pointers.length, "Chunk index out of bounds");
         return SSTORE2.read(pointers[index]);
     }

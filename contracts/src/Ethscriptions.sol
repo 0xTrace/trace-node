@@ -50,7 +50,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     }
 
     struct CreateEthscriptionParams {
-        bytes32 transactionHash;
+        bytes32 ethscriptionId;
         bytes32 contentUriHash;  // SHA256 of raw content URI (for protocol uniqueness)
         address initialOwner;
         bytes content;           // Raw decoded bytes (not Base64)
@@ -73,7 +73,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     //                      STATE VARIABLES
     // =============================================================
 
-    /// @dev Transaction hash => Ethscription data
+    /// @dev Ethscription ID (L1 tx hash) => Ethscription data
     mapping(bytes32 => Ethscription) internal ethscriptions;
 
     /// @dev Content SHA => SSTORE2 pointers array
@@ -83,8 +83,8 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     /// @dev bytes32(0) means unused, non-zero means the content URI has been used
     mapping(bytes32 => bytes32) public firstEthscriptionByContentUri;
 
-    /// @dev Mapping from ethscription number (token ID) to transaction hash
-    mapping(uint256 => bytes32) public tokenIdToTransactionHash;
+    /// @dev Mapping from token ID (ethscription number) to ethscription ID (L1 tx hash)
+    mapping(uint256 => bytes32) public tokenIdToEthscriptionId;
 
     /// @dev Protocol registry - maps protocol names to handler addresses
     mapping(string => address) public protocolHandlers;
@@ -117,7 +117,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
 
     /// @notice Emitted when a new ethscription is created
     event EthscriptionCreated(
-        bytes32 indexed transactionHash,
+        bytes32 indexed ethscriptionId,
         address indexed creator,
         address indexed initialOwner,
         bytes32 contentUriHash,
@@ -129,7 +129,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     /// @dev This event matches the Ethscriptions protocol transfer semantics where 'from' is the initiator
     /// For creations, this shows transfer from creator to initial owner (not from address(0))
     event EthscriptionTransferred(
-        bytes32 indexed transactionHash,
+        bytes32 indexed ethscriptionId,
         address indexed from,
         address indexed to,
         uint256 ethscriptionNumber
@@ -140,14 +140,14 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
 
     /// @notice Emitted when a protocol handler operation fails but ethscription continues
     event ProtocolHandlerFailed(
-        bytes32 indexed transactionHash,
+        bytes32 indexed ethscriptionId,
         string protocol,
         bytes revertData
     );
 
     /// @notice Emitted when a protocol handler operation succeeds
     event ProtocolHandlerSuccess(
-        bytes32 indexed transactionHash,
+        bytes32 indexed ethscriptionId,
         string protocol,
         bytes returnData
     );
@@ -162,11 +162,17 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         _;
     }
 
-    /// @notice Modifier to require that an ethscription exists
-    /// @param transactionHash The transaction hash to check
-    modifier requireExists(bytes32 transactionHash) {
-        if (!_ethscriptionExists(transactionHash)) revert EthscriptionDoesNotExist();
-        _;
+    /// @notice Resolve and validate an ethscription (by ID) or revert
+    function _getEthscriptionOrRevert(bytes32 ethscriptionId) internal view returns (Ethscription storage ethscription) {
+        if (!_ethscriptionExists(ethscriptionId)) revert EthscriptionDoesNotExist();
+        ethscription = ethscriptions[ethscriptionId];
+    }
+
+    /// @notice Resolve and validate an ethscription (by tokenId) or revert
+    function _getEthscriptionOrRevert(uint256 tokenId) internal view returns (Ethscription storage ethscription) {
+        bytes32 id = tokenIdToEthscriptionId[tokenId];
+        if (!_ethscriptionExists(id)) revert TokenDoesNotExist();
+        ethscription = ethscriptions[id];
     }
 
     // =============================================================
@@ -199,20 +205,20 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         address creator = msg.sender;
 
         if (creator == address(0)) revert InvalidCreator();
-        if (_ethscriptionExists(params.transactionHash)) revert EthscriptionAlreadyExists();
+        if (_ethscriptionExists(params.ethscriptionId)) revert EthscriptionAlreadyExists();
         
         bool contentUriAlreadySeen = firstEthscriptionByContentUri[params.contentUriHash] != bytes32(0);
 
         if (contentUriAlreadySeen) {
             if (!params.esip6) revert DuplicateContentUri();
         } else {
-            firstEthscriptionByContentUri[params.contentUriHash] = params.transactionHash;
+            firstEthscriptionByContentUri[params.contentUriHash] = params.ethscriptionId;
         }
 
         // Store content and get content SHA (of raw bytes)
         bytes32 contentSha = _storeContent(params.content);
 
-        ethscriptions[params.transactionHash] = Ethscription({
+        ethscriptions[params.ethscriptionId] = Ethscription({
             contentUriHash: params.contentUriHash,
             contentSha: contentSha,
             l1BlockHash: l1Block.hash(),
@@ -230,8 +236,8 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         // Use ethscription number as token ID
         tokenId = totalSupply();
 
-        // Store the mapping from token ID to transaction hash
-        tokenIdToTransactionHash[tokenId] = params.transactionHash;
+        // Store the mapping from token ID to ethscription ID
+        tokenIdToEthscriptionId[tokenId] = params.ethscriptionId;
 
         // Mint to initial owner (if address(0), mint to creator then transfer)
         if (params.initialOwner == address(0)) {
@@ -242,7 +248,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         }
 
         emit EthscriptionCreated(
-            params.transactionHash,
+            params.ethscriptionId,
             creator,
             params.initialOwner,
             params.contentUriHash,
@@ -251,20 +257,20 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         );
 
         // Handle protocol operations (if any)
-        _callProtocolOperation(params.transactionHash, params.protocolParams);
+        _callProtocolOperation(params.ethscriptionId, params.protocolParams);
     }
 
     /// @notice Transfer an ethscription
     /// @dev Called via system transaction with msg.sender spoofed as 'from'
     /// @param to The recipient address (can be address(0) for burning)
-    /// @param transactionHash The ethscription to transfer (used to find token ID)
+    /// @param ethscriptionId The ethscription to transfer (used to find token ID)
     function transferEthscription(
         address to,
-        bytes32 transactionHash
-    ) external requireExists(transactionHash) {
-        // Get the ethscription number to use as token ID
-        Ethscription storage etsc = ethscriptions[transactionHash];
-        uint256 tokenId = etsc.ethscriptionNumber;
+        bytes32 ethscriptionId
+    ) external {
+        // Load and validate
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        uint256 tokenId = ethscription.ethscriptionNumber;
         // Standard ERC721 transfer will handle authorization
         transferFrom(msg.sender, to, tokenId);
     }
@@ -272,39 +278,39 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
     /// @notice Transfer an ethscription with previous owner validation (ESIP-2)
     /// @dev Called via system transaction with msg.sender spoofed as 'from'
     /// @param to The recipient address (can be address(0) for burning)
-    /// @param transactionHash The ethscription to transfer
+    /// @param ethscriptionId The ethscription to transfer
     /// @param previousOwner The required previous owner for validation
     function transferEthscriptionForPreviousOwner(
         address to,
-        bytes32 transactionHash,
+        bytes32 ethscriptionId,
         address previousOwner
-    ) external requireExists(transactionHash) {
-        Ethscription storage etsc = ethscriptions[transactionHash];
+    ) external {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
 
         // Verify the previous owner matches
-        if (etsc.previousOwner != previousOwner) {
+        if (ethscription.previousOwner != previousOwner) {
             revert PreviousOwnerMismatch();
         }
 
         // Use transferFrom which now handles burns when to == address(0)
-        transferFrom(msg.sender, to, etsc.ethscriptionNumber);
+        transferFrom(msg.sender, to, ethscription.ethscriptionNumber);
     }
 
     /// @notice Transfer multiple ethscriptions to a single recipient
     /// @dev Continues transferring even if individual transfers fail due to wrong ownership
-    /// @param transactionHashes Array of ethscription hashes to transfer
+    /// @param ethscriptionIds Array of ethscription IDs to transfer
     /// @param to The recipient address (can be address(0) for burning)
     /// @return successCount Number of successful transfers
     function transferEthscriptions(
         address to,
-        bytes32[] calldata transactionHashes
+        bytes32[] calldata ethscriptionIds
     ) external returns (uint256 successCount) {
-        for (uint256 i = 0; i < transactionHashes.length; i++) {
+        for (uint256 i = 0; i < ethscriptionIds.length; i++) {
             // Get the ethscription to find its token ID
-            if (!_ethscriptionExists(transactionHashes[i])) continue; // Skip non-existent ethscriptions
-            Ethscription storage etsc = ethscriptions[transactionHashes[i]];
+            if (!_ethscriptionExists(ethscriptionIds[i])) continue; // Skip non-existent ethscriptions
+            Ethscription storage ethscription = ethscriptions[ethscriptionIds[i]];
 
-            uint256 tokenId = etsc.ethscriptionNumber;
+            uint256 tokenId = ethscription.ethscriptionNumber;
 
             // Check if sender owns this token before attempting transfer
             // This prevents reverts and allows us to continue
@@ -337,81 +343,109 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
 
     /// @notice Returns the full data URI for a token
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        // Find the transaction hash for this token ID (ethscription number)
-        bytes32 txHash = tokenIdToTransactionHash[tokenId];
-        if (!_ethscriptionExists(txHash)) revert TokenDoesNotExist();
-        Ethscription storage etsc = ethscriptions[txHash];
+        // Find the ethscription for this token ID (ethscription number)
+        Ethscription storage ethscription = _getEthscriptionOrRevert(tokenId);
+        bytes32 id = tokenIdToEthscriptionId[tokenId];
 
         // Get content
-        bytes memory content = getEthscriptionContent(txHash);
+        bytes memory content = getEthscriptionContent(id);
 
         // Build complete token URI using the library - it handles everything internally
-        return EthscriptionsRendererLib.buildTokenURI(etsc, txHash, content);
+        return EthscriptionsRendererLib.buildTokenURI(ethscription, id, content);
     }
 
     /// @notice Get the media URI for an ethscription (image or animation_url)
-    /// @param txHash The transaction hash of the ethscription
+    /// @param ethscriptionId The ethscription ID (L1 tx hash) of the ethscription
     /// @return mediaType Either "image" or "animation_url"
     /// @return mediaUri The data URI for the media
-    function getMediaUri(bytes32 txHash) external view requireExists(txHash) returns (string memory mediaType, string memory mediaUri) {
-        Ethscription storage etsc = ethscriptions[txHash];
-        bytes memory content = getEthscriptionContent(txHash);
-        return etsc.getMediaUri(content);
+    function getMediaUri(bytes32 ethscriptionId) external view returns (string memory mediaType, string memory mediaUri) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        bytes memory content = getEthscriptionContent(ethscriptionId);
+        return ethscription.getMediaUri(content);
     }
 
     // -------------------- Data Retrieval --------------------
 
     /// @notice Get ethscription details (returns struct to avoid stack too deep)
-    function getEthscription(bytes32 transactionHash) external view requireExists(transactionHash) returns (Ethscription memory) {
-        return ethscriptions[transactionHash];
+    function getEthscription(bytes32 ethscriptionId) external view returns (Ethscription memory) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        return ethscription;
     }
 
     /// @notice Get content for an ethscription
-    function getEthscriptionContent(bytes32 txHash) public view requireExists(txHash) returns (bytes memory) {
-        Ethscription storage etsc = ethscriptions[txHash];
-        address[] storage pointers = contentPointersBySha[etsc.contentSha];
+    function getEthscriptionContent(bytes32 ethscriptionId) public view returns (bytes memory) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        address[] storage pointers = contentPointersBySha[ethscription.contentSha];
         // Empty content is valid - returns "" for empty pointers array
         return pointers.read();
     }
 
     /// @notice Get ethscription details and content in a single call
-    /// @param txHash The transaction hash to look up
+    /// @param ethscriptionId The ethscription ID to look up
     /// @return ethscription The ethscription struct
     /// @return content The content bytes
-    function getEthscriptionWithContent(bytes32 txHash) external view requireExists(txHash) returns (Ethscription memory ethscription, bytes memory content) {
-        ethscription = ethscriptions[txHash];
-        address[] storage pointers = contentPointersBySha[ethscription.contentSha];
-        // Empty content is valid - returns "" for empty pointers array
-        content = pointers.read();
+    function getEthscriptionWithContent(bytes32 ethscriptionId) external view returns (Ethscription memory ethscription, bytes memory content) {
+        ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        content = getEthscriptionContent(ethscriptionId);
+    }
+
+    /// @notice Overload: get ethscription by tokenId
+    function getEthscription(uint256 tokenId) external view returns (Ethscription memory) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(tokenId);
+        return ethscription;
+    }
+
+    /// @notice Overload: get content by tokenId
+    function getEthscriptionContent(uint256 tokenId) external view returns (bytes memory) {
+        // Ensure it exists
+        _getEthscriptionOrRevert(tokenId);
+        bytes32 id = tokenIdToEthscriptionId[tokenId];
+        return getEthscriptionContent(id);
+    }
+
+    /// @notice Overload: get struct and content by tokenId
+    function getEthscriptionWithContent(uint256 tokenId) external view returns (Ethscription memory ethscription, bytes memory content) {
+        ethscription = _getEthscriptionOrRevert(tokenId);
+        bytes32 id = tokenIdToEthscriptionId[tokenId];
+        content = getEthscriptionContent(id);
     }
 
     // ---------------- Ownership & Existence Checks ----------------
 
     /// @notice Check if an ethscription exists
-    /// @param transactionHash The transaction hash to check
+    /// @param ethscriptionId The ethscription ID to check
     /// @return true if the ethscription exists
-    function exists(bytes32 transactionHash) external view returns (bool) {
-        return _ethscriptionExists(transactionHash);
+    function exists(bytes32 ethscriptionId) external view returns (bool) {
+        return _ethscriptionExists(ethscriptionId);
     }
     
     function exists(uint256 tokenId) external view returns (bool) {
-        return _ethscriptionExists(tokenIdToTransactionHash[tokenId]);
+        return _ethscriptionExists(tokenIdToEthscriptionId[tokenId]);
     }
 
     /// @notice Get owner of an ethscription by transaction hash
     /// @dev Overload of ownerOf that accepts transaction hash instead of token ID
-    function ownerOf(bytes32 transactionHash) external view requireExists(transactionHash) returns (address) {
-        Ethscription storage etsc = ethscriptions[transactionHash];
-        uint256 tokenId = etsc.ethscriptionNumber;
+    function ownerOf(bytes32 ethscriptionId) external view returns (address) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        uint256 tokenId = ethscription.ethscriptionNumber;
 
         return ownerOf(tokenId);
     }
 
     /// @notice Get the token ID (ethscription number) for a given transaction hash
-    /// @param transactionHash The transaction hash to look up
+    /// @param ethscriptionId The ethscription ID to look up
     /// @return The token ID (ethscription number)
-    function getTokenId(bytes32 transactionHash) external view requireExists(transactionHash) returns (uint256) {
-        return ethscriptions[transactionHash].ethscriptionNumber;
+    function getTokenId(bytes32 ethscriptionId) external view returns (uint256) {
+        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
+        return ethscription.ethscriptionNumber;
+    }
+
+    /// @notice Get the ethscription ID (bytes32) for a given tokenId
+    /// @dev Reverts if tokenId does not exist
+    function getEthscriptionId(uint256 tokenId) external view returns (bytes32) {
+        bytes32 id = tokenIdToEthscriptionId[tokenId];
+        if (!_ethscriptionExists(id)) revert TokenDoesNotExist();
+        return id;
     }
 
     // =============================================================
@@ -420,41 +454,41 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
 
     /// @dev Override _update to track previous owner and handle token transfers
     function _update(address to, uint256 tokenId, address auth) internal virtual override returns (address from) {
-        // Find the transaction hash for this token ID (ethscription number)
-        bytes32 txHash = tokenIdToTransactionHash[tokenId];
-        Ethscription storage etsc = ethscriptions[txHash];
+        // Find the ethscription ID for this token ID (ethscription number)
+        bytes32 id = tokenIdToEthscriptionId[tokenId];
+        Ethscription storage ethscription = ethscriptions[id];
 
         // Call parent implementation first to handle the actual update
         from = super._update(to, tokenId, auth);
 
         if (from == address(0)) {
             // Mint: emit once when minted directly to initial owner
-            if (to == etsc.initialOwner) {
-                emit EthscriptionTransferred(txHash, etsc.creator, to, tokenId);
+            if (to == ethscription.initialOwner) {
+                emit EthscriptionTransferred(id, ethscription.creator, to, tokenId);
             }
             // no previousOwner update or tokenManager call on mint
         } else {
             // Transfers (including creator -> address(0))
-            emit EthscriptionTransferred(txHash, from, to, tokenId);
-            etsc.previousOwner = from;
+            emit EthscriptionTransferred(id, from, to, tokenId);
+            ethscription.previousOwner = from;
 
             // Notify protocol handler about the transfer if this ethscription has a protocol
-            _notifyProtocolTransfer(txHash, from, to);
+            _notifyProtocolTransfer(id, from, to);
         }
 
         // Queue ethscription for batch proving at block boundary once proving is live
-        _queueForProving(txHash);
+        _queueForProving(id);
     }
 
     /// @notice Check if an ethscription exists
     /// @dev An ethscription exists if it has been created (has a creator set)
-    /// @param transactionHash The transaction hash to check
+    /// @param ethscriptionId The ethscription ID to check
     /// @return True if the ethscription exists
-    function _ethscriptionExists(bytes32 transactionHash) internal view returns (bool) {
+    function _ethscriptionExists(bytes32 ethscriptionId) internal view returns (bool) {
         // Check if this ethscription has been created
         // We can't use _tokenExists here because we need the tokenId first
         // Instead, check if creator is set (ethscriptions are never created with zero creator)
-        return ethscriptions[transactionHash].creator != address(0);
+        return ethscriptions[ethscriptionId].creator != address(0);
     }
 
     /// @notice Internal helper to store content and return its SHA
@@ -484,17 +518,17 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         return contentSha;
     }
 
-    function _queueForProving(bytes32 txHash) internal {
+    function _queueForProving(bytes32 ethscriptionId) internal {
         if (block.timestamp >= Constants.historicalBackfillApproxDoneAt) {
-            prover.queueEthscription(txHash);
+            prover.queueEthscription(ethscriptionId);
         }
     }
 
     /// @notice Call a protocol handler operation during ethscription creation
-    /// @param txHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID (L1 tx hash)
     /// @param protocolParams The protocol parameters struct
     function _callProtocolOperation(
-        bytes32 txHash,
+        bytes32 ethscriptionId,
         ProtocolParams calldata protocolParams
     ) internal {
         // Skip if no protocol specified
@@ -503,7 +537,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         }
 
         // Track which protocol this ethscription uses
-        protocolOf[txHash] = protocolParams.protocolName;
+        protocolOf[ethscriptionId] = protocolParams.protocolName;
 
         address handler = protocolHandlers[protocolParams.protocolName];
 
@@ -515,7 +549,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         // Encode the function call with operation name
         bytes memory callData = abi.encodeWithSignature(
             string.concat("op_", protocolParams.operation, "(bytes32,bytes)"),
-            txHash,
+            ethscriptionId,
             protocolParams.data
         );
 
@@ -523,22 +557,22 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         (bool success, bytes memory returnData) = handler.call(callData);
 
         if (!success) {
-            emit ProtocolHandlerFailed(txHash, protocolParams.protocolName, returnData);
+            emit ProtocolHandlerFailed(ethscriptionId, protocolParams.protocolName, returnData);
         } else {
-            emit ProtocolHandlerSuccess(txHash, protocolParams.protocolName, returnData);
+            emit ProtocolHandlerSuccess(ethscriptionId, protocolParams.protocolName, returnData);
         }
     }
 
     /// @notice Notify protocol handler about an ethscription transfer
-    /// @param txHash The ethscription transaction hash
+    /// @param ethscriptionId The ethscription ID (L1 tx hash)
     /// @param from The address transferring from
     /// @param to The address transferring to
     function _notifyProtocolTransfer(
-        bytes32 txHash,
+        bytes32 ethscriptionId,
         address from,
         address to
     ) internal {
-        string memory protocol = protocolOf[txHash];
+        string memory protocol = protocolOf[ethscriptionId];
 
         // Skip if no protocol assigned
         if (bytes(protocol).length == 0) {
@@ -553,11 +587,11 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
         }
 
         // Use try/catch for cleaner error handling
-        try IProtocolHandler(handler).onTransfer(txHash, from, to) {
+        try IProtocolHandler(handler).onTransfer(ethscriptionId, from, to) {
             // onTransfer doesn't return data, so pass empty bytes
-            emit ProtocolHandlerSuccess(txHash, protocol, "");
+            emit ProtocolHandlerSuccess(ethscriptionId, protocol, "");
         } catch (bytes memory revertData) {
-            emit ProtocolHandlerFailed(txHash, protocol, revertData);
+            emit ProtocolHandlerFailed(ethscriptionId, protocol, revertData);
         }
     }
 
@@ -573,48 +607,48 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
 
         // Emit events in the order they were created (FIFO)
         for (uint256 i = 0; i < count; i++) {
-            bytes32 txHash = pendingGenesisEvents[i];
+            bytes32 ethscriptionId = pendingGenesisEvents[i];
 
             // Get the ethscription data
-            Ethscription storage etsc = ethscriptions[txHash];
-            uint256 tokenId = etsc.ethscriptionNumber;
+            Ethscription storage ethscription = ethscriptions[ethscriptionId];
+            uint256 tokenId = ethscription.ethscriptionNumber;
 
             // Emit events in the same order as live mints:
             // 1. Transfer (mint), 2. EthscriptionTransferred, 3. EthscriptionCreated
 
-            if (etsc.initialOwner == address(0)) {
+            if (ethscription.initialOwner == address(0)) {
                 // Token was minted to creator then burned
                 // First emit mint to creator
-                emit Transfer(address(0), etsc.creator, tokenId);
+                emit Transfer(address(0), ethscription.creator, tokenId);
                 // Then emit burn from creator to null address
-                emit Transfer(etsc.creator, address(0), tokenId);
+                emit Transfer(ethscription.creator, address(0), tokenId);
                 // Emit Ethscriptions transfer event for the burn
                 emit EthscriptionTransferred(
-                    txHash,
-                    etsc.creator,
+                    ethscriptionId,
+                    ethscription.creator,
                     address(0),
-                    etsc.ethscriptionNumber
+                    ethscription.ethscriptionNumber
                 );
             } else {
                 // Token was minted directly to initial owner
-                emit Transfer(address(0), etsc.initialOwner, tokenId);
+                emit Transfer(address(0), ethscription.initialOwner, tokenId);
                 // Emit Ethscriptions transfer event
                 emit EthscriptionTransferred(
-                    txHash,
-                    etsc.creator,
-                    etsc.initialOwner,
-                    etsc.ethscriptionNumber
+                    ethscriptionId,
+                    ethscription.creator,
+                    ethscription.initialOwner,
+                    ethscription.ethscriptionNumber
                 );
             }
 
             // Finally emit the creation event (matching the order of live mints)
             emit EthscriptionCreated(
-                txHash,
-                etsc.creator,
-                etsc.initialOwner,
-                etsc.contentUriHash,
-                etsc.contentSha,
-                etsc.ethscriptionNumber
+                ethscriptionId,
+                ethscription.creator,
+                ethscription.initialOwner,
+                ethscription.contentUriHash,
+                ethscription.contentSha,
+                ethscription.ethscriptionNumber
             );
         }
 

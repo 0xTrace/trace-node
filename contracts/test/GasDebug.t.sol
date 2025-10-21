@@ -38,7 +38,7 @@ contract GasDebugTest is TestSetup {
             console.log("Token ID created:", tokenId);
 
             // Verify it was created
-            Ethscriptions.Ethscription memory etsc = ethscriptions.getEthscription(params.transactionHash);
+            Ethscriptions.Ethscription memory etsc = ethscriptions.getEthscription(params.ethscriptionId);
             assertEq(etsc.creator, INITIAL_OWNER);
             assertEq(etsc.initialOwner, INITIAL_OWNER);
             assertEq(etsc.mimetype, "image/png");
