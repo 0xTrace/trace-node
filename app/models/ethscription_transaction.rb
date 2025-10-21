@@ -17,8 +17,7 @@ class EthscriptionTransaction < T::Struct
   prop :content_uri, T.nilable(String)
 
   # Transfer operation fields
-  prop :ethscription_id, T.nilable(String)
-  prop :transfer_ids, T.nilable(T::Array[String])
+  prop :transfer_ids, T.nilable(T::Array[String])  # Always an array, even for single transfers
   prop :transfer_from_address, T.nilable(String)
   prop :transfer_to_address, T.nilable(String)
   prop :enforced_previous_owner, T.nilable(String)
@@ -38,7 +37,7 @@ class EthscriptionTransaction < T::Struct
   TO_ADDRESS = SysConfig::ETHSCRIPTIONS_ADDRESS
 
   # Factory method for create operations
-  def self.create_ethscription(
+  def self.build_create_ethscription(
     eth_transaction:,
     creator:,
     initial_owner:,
@@ -46,6 +45,8 @@ class EthscriptionTransaction < T::Struct
     source_type:,
     source_index:
   )
+    return unless DataUri.valid?(content_uri)
+
     new(
       from_address: Address20.from_hex(creator.is_a?(String) ? creator : creator.to_hex),
       eth_transaction: eth_transaction,
@@ -58,22 +59,26 @@ class EthscriptionTransaction < T::Struct
     )
   end
 
-  # Factory method for transfer operations
-  def self.transfer_ethscription(
+  # Transfer factory - handles single, multiple, and previous owner cases
+  def self.build_transfer(
     eth_transaction:,
     from_address:,
     to_address:,
-    ethscription_id:,
-    enforced_previous_owner: nil,
     source_type:,
-    source_index:
+    source_index:,
+    ethscription_ids:,  # Can be a single ID or an array of IDs
+    enforced_previous_owner: nil
   )
+    # Normalize to array - accept either single ID or array of IDs
+    ids = Array.wrap(ethscription_ids)
+
+    # Determine operation type
     operation_type = enforced_previous_owner ? 'transfer_with_previous_owner' : 'transfer'
 
     new(
       from_address: Address20.from_hex(from_address.is_a?(String) ? from_address : from_address.to_hex),
       eth_transaction: eth_transaction,
-      ethscription_id: ethscription_id,
+      transfer_ids: ids,  # Always use array
       transfer_from_address: from_address,
       transfer_to_address: to_address,
       enforced_previous_owner: enforced_previous_owner,
@@ -83,35 +88,14 @@ class EthscriptionTransaction < T::Struct
     )
   end
 
-  # Factory method for transferMultipleEthscriptions (inputs only)
-  def self.transfer_multiple_ethscriptions(
-    eth_transaction:,
-    from_address:,
-    to_address:,
-    ethscription_ids:,
-    source_type:,
-    source_index:
-  )
-    new(
-      from_address: Address20.from_hex(from_address.is_a?(String) ? from_address : from_address.to_hex),
-      eth_transaction: eth_transaction,
-      transfer_ids: ethscription_ids,
-      transfer_from_address: from_address,
-      transfer_to_address: to_address,
-      source_type: source_type&.to_sym,
-      source_index: source_index,
-      ethscription_operation: 'transfer'
-    )
-  end
-
   # Get function selector for this operation
   def function_selector
     function_signature = case ethscription_operation
     when 'create'
       'createEthscription((bytes32,bytes32,address,bytes,string,bool,(string,string,bytes)))'
     when 'transfer'
-      if transfer_ids && transfer_ids.any?
-        'transferMultipleEthscriptions(bytes32[],address)'
+      if transfer_ids.length > 1
+        'transferEthscriptions(address,bytes32[])'
       else
         'transferEthscription(address,bytes32)'
       end
@@ -145,34 +129,6 @@ class EthscriptionTransaction < T::Struct
     Hash32.from_bin(bin_val)
   end
 
-  def valid_create?
-    content_uri.present? &&
-    creator.present? &&
-    initial_owner.present? &&
-    DataUri.valid?(content_uri)
-  end
-
-  def valid_transfer?
-    # Basic field validation - if we extracted the data properly, ABI encoding should work
-    case ethscription_operation
-    when 'transfer'
-      if transfer_ids
-        # Multiple transfer (input-based)
-        transfer_ids.is_a?(Array) && transfer_ids.any?
-      else
-        # Single transfer (event-based)
-        ethscription_id.present?
-      end
-    when 'transfer_with_previous_owner'
-      # Always single transfer (event-based only)
-      ethscription_id.present?
-    else
-      false
-    end &&
-    transfer_from_address.present? &&
-    transfer_to_address.present?
-  end
-
   public
 
   # Dynamic input method - builds calldata on demand
@@ -181,7 +137,7 @@ class EthscriptionTransaction < T::Struct
     when 'create'
       ByteString.from_bin(build_create_calldata)
     when 'transfer'
-      if transfer_ids && transfer_ids.any?
+      if transfer_ids.length > 1
         ByteString.from_bin(build_transfer_multiple_calldata)
       else
         ByteString.from_bin(build_transfer_calldata)
@@ -267,7 +223,7 @@ class EthscriptionTransaction < T::Struct
 
     # Convert to binary for ABI
     to_bin = address_to_bin(transfer_to_address)
-    id_bin = hex_to_bin(ethscription_id)
+    id_bin = hex_to_bin(transfer_ids.first)
 
     encoded = Eth::Abi.encode(['address', 'bytes32'], [to_bin, id_bin])
 
@@ -281,7 +237,7 @@ class EthscriptionTransaction < T::Struct
 
     # Convert to binary for ABI
     to_bin = address_to_bin(transfer_to_address)
-    id_bin = hex_to_bin(ethscription_id)
+    id_bin = hex_to_bin(transfer_ids.first)
     prev_bin = address_to_bin(enforced_previous_owner)
 
     encoded = Eth::Abi.encode(['address', 'bytes32', 'address'], [to_bin, id_bin, prev_bin])
@@ -294,10 +250,10 @@ class EthscriptionTransaction < T::Struct
     # Get function selector as binary
     function_sig = function_selector.b
 
-    ids_bin = (transfer_ids || []).map { |id| hex_to_bin(id) }
     to_bin = address_to_bin(transfer_to_address)
+    ids_bin = transfer_ids.map { |id| hex_to_bin(id) }
 
-    encoded = Eth::Abi.encode(['bytes32[]', 'address'], [ids_bin, to_bin])
+    encoded = Eth::Abi.encode(['address', 'bytes32[]'], [to_bin, ids_bin])
 
     (function_sig + encoded).b
   end

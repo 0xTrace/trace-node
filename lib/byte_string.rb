@@ -84,6 +84,10 @@ class ByteString
   def keccak256
     ByteString.from_bin(Eth::Util.keccak256(self.to_bin))
   end
+  
+  def bytesize
+    @bytes.bytesize
+  end
 
   private
 
