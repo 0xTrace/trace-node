@@ -60,7 +60,7 @@ class ValidationResult < ApplicationRecord
 
   # Class method to perform validation and save result
   def self.validate_and_save(l1_block_number, l2_block_hashes)
-    Rails.logger.info "ValidationResult: Validating L1 block #{l1_block_number}"
+    Rails.logger.debug "ValidationResult: Validating L1 block #{l1_block_number}"
 
     # Create validator and validate (validator fetches its own API data)
     validator = BlockValidator.new
@@ -113,10 +113,10 @@ class ValidationResult < ApplicationRecord
     if success?
       stats_data = validation_stats || {}
       if stats_data['actual_creations'].to_i > 0 || stats_data['actual_transfers'].to_i > 0 || stats_data['storage_checks'].to_i > 0
-        logger.info "✅ Block #{l1_block} validated successfully: " \
-                    "#{stats_data['actual_creations']} creations, " \
-                    "#{stats_data['actual_transfers']} transfers, " \
-                    "#{stats_data['storage_checks']} storage checks"
+        logger.debug "✅ Block #{l1_block} validated successfully: " \
+                     "#{stats_data['actual_creations']} creations, " \
+                     "#{stats_data['actual_transfers']} transfers, " \
+                     "#{stats_data['storage_checks']} storage checks"
       end
     else
       errors = error_details || []

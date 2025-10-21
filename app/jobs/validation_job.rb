@@ -17,7 +17,7 @@ class ValidationJob < ApplicationJob
     ValidationResult.validate_and_save(l1_block_number, l2_block_hashes)
 
     elapsed_time = Time.current - start_time
-    Rails.logger.info "ValidationJob: Block #{l1_block_number} validation completed in #{elapsed_time.round(3)}s"
+    Rails.logger.debug "ValidationJob: Block #{l1_block_number} validation completed in #{elapsed_time.round(3)}s"
   rescue => e
     Rails.logger.error "ValidationJob failed for L1 #{l1_block_number}: #{e.class}: #{e.message}"
     raise
