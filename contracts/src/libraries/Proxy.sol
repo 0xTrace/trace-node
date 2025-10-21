@@ -42,13 +42,7 @@ contract Proxy {
     }
 
     // slither-disable-next-line locked-ether
-    receive() external payable {
-        // Proxy call by default.
-        _doProxyCall();
-    }
-
-    // slither-disable-next-line locked-ether
-    fallback() external payable {
+    fallback() external {
         // Proxy call by default.
         _doProxyCall();
     }
