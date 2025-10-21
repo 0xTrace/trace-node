@@ -227,7 +227,7 @@ contract EthscriptionsMultiTransferTest is TestSetup {
 
         // Check all expected attributes
         string[10] memory expectedTraits = [
-            "Transaction Hash",
+            "Ethscription ID",
             "Ethscription Number",
             "Creator",
             "Initial Owner",

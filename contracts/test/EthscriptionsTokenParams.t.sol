@@ -19,7 +19,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(1)),
+            ethscriptionId: bytes32(uint256(1)),
             contentUriHash: contentUriHash,
             initialOwner: address(this),
             content: bytes(tokenJson),
@@ -39,7 +39,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         assertEq(ethscriptions.totalSupply(), 12, "Should have created new ethscription");
 
         // Get the ethscription data
-        Ethscriptions.Ethscription memory eth = ethscriptions.getEthscription(params.transactionHash);
+        Ethscriptions.Ethscription memory eth = ethscriptions.getEthscription(params.ethscriptionId);
         assertEq(eth.creator, address(this), "Creator should match");
         assertEq(eth.initialOwner, address(this), "Initial owner should match");
     }
@@ -57,7 +57,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(2)),
+            ethscriptionId: bytes32(uint256(2)),
             contentUriHash: contentUriHash,
             initialOwner: address(this),
             content: bytes(tokenJson),
@@ -84,7 +84,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         bytes32 contentUriHash = sha256(bytes(dataUri));
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: bytes32(uint256(3)),
+            ethscriptionId: bytes32(uint256(3)),
             contentUriHash: contentUriHash,
             initialOwner: address(this),
             content: bytes(content),
@@ -117,7 +117,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory deployParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("deploy_tx"),
+            ethscriptionId: keccak256("deploy_tx"),
             contentUriHash: sha256(bytes(deployUri)),
             initialOwner: address(this),
             content: bytes(deployJson),
@@ -143,7 +143,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         });
 
         Ethscriptions.CreateEthscriptionParams memory mintParams = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: keccak256("mint_tx"),
+            ethscriptionId: keccak256("mint_tx"),
             contentUriHash: sha256(bytes(mintUri)),
             initialOwner: address(this),
             content: bytes(mintJson),

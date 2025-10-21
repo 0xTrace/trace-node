@@ -15,7 +15,7 @@ contract EthscriptionsWithContentTest is TestSetup {
         // Create the ethscription
         vm.prank(creator);
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: keccak256(bytes("data:text/plain,Hello, World!")),
             initialOwner: initialOwner,
             content: bytes(testContent),
@@ -91,7 +91,7 @@ contract EthscriptionsWithContentTest is TestSetup {
         // Create the ethscription
         vm.prank(creator);
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: keccak256(bytes("data:application/octet-stream,<large content>")),
             initialOwner: initialOwner,
             content: largeContent,

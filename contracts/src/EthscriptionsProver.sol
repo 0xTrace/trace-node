@@ -27,7 +27,7 @@ contract EthscriptionsProver {
 
     /// @notice Struct for ethscription data proof
     struct EthscriptionDataProof {
-        bytes32 ethscriptionTxHash;
+        bytes32 ethscriptionId;
         bytes32 contentSha;
         bytes32 contentUriHash;
         bytes32 l1BlockHash;
@@ -78,7 +78,7 @@ contract EthscriptionsProver {
 
     /// @notice Emitted when an ethscription data proof is sent to L1
     event EthscriptionDataProofSent(
-        bytes32 indexed ethscriptionTxHash,
+        bytes32 indexed ethscriptionId,
         uint256 indexed l2BlockNumber,
         uint256 l2Timestamp
     );
@@ -89,16 +89,16 @@ contract EthscriptionsProver {
 
     /// @notice Queue an ethscription for proving
     /// @dev Only callable by the Ethscriptions contract
-    /// @param txHash The transaction hash of the ethscription
-    function queueEthscription(bytes32 txHash) external virtual {
+    /// @param ethscriptionId The ID of the ethscription (L1 tx hash)
+    function queueEthscription(bytes32 ethscriptionId) external virtual {
         if (msg.sender != address(ethscriptions)) revert OnlyEthscriptions();
 
         // Add to the set (deduplicates automatically)
-        if (queuedEthscriptions.add(txHash)) {
-            // Only store info if this is the first time we're queueing this txHash
+        if (queuedEthscriptions.add(ethscriptionId)) {
+            // Only store info if this is the first time we're queueing this ID
             // Capture the L1 block hash and number at the time of queuing
             L1Block l1Block = L1Block(L1_BLOCK);
-            queuedProofInfo[txHash] = QueuedProof({
+            queuedProofInfo[ethscriptionId] = QueuedProof({
                 l1BlockHash: l1Block.hash(),
                 l2BlockNumber: uint48(block.number),
                 l2BlockTimestamp: uint48(block.timestamp),
@@ -117,14 +117,14 @@ contract EthscriptionsProver {
         // Process and remove each ethscription from the set
         // We iterate backwards to avoid index shifting during removal
         for (uint256 i = count; i > 0; i--) {
-            bytes32 txHash = queuedEthscriptions.at(i - 1);
+            bytes32 ethscriptionId = queuedEthscriptions.at(i - 1);
 
             // Create and send proof for current state with stored block info
-            _createAndSendProof(txHash, queuedProofInfo[txHash]);
+            _createAndSendProof(ethscriptionId, queuedProofInfo[ethscriptionId]);
 
             // Clean up: remove from set and delete the proof info
-            queuedEthscriptions.remove(txHash);
-            delete queuedProofInfo[txHash];
+            queuedEthscriptions.remove(ethscriptionId);
+            delete queuedProofInfo[ethscriptionId];
         }
     }
 
@@ -133,24 +133,24 @@ contract EthscriptionsProver {
     // =============================================================
 
     /// @notice Internal function to create and send proof for an ethscription
-    /// @param ethscriptionTxHash The transaction hash of the ethscription
+    /// @param ethscriptionId The Ethscription ID (L1 tx hash)
     /// @param proofInfo The queued proof info containing block data
-    function _createAndSendProof(bytes32 ethscriptionTxHash, QueuedProof memory proofInfo) internal {
+    function _createAndSendProof(bytes32 ethscriptionId, QueuedProof memory proofInfo) internal {
         // Get ethscription data including previous owner
-        Ethscriptions.Ethscription memory etsc = ethscriptions.getEthscription(ethscriptionTxHash);
-        address currentOwner = ethscriptions.ownerOf(ethscriptionTxHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptions.getEthscription(ethscriptionId);
+        address currentOwner = ethscriptions.ownerOf(ethscriptionId);
 
         // Create proof struct with all ethscription data
         EthscriptionDataProof memory proof = EthscriptionDataProof({
-            ethscriptionTxHash: ethscriptionTxHash,
-            contentSha: etsc.contentSha,
-            contentUriHash: etsc.contentUriHash,
+            ethscriptionId: ethscriptionId,
+            contentSha: ethscription.contentSha,
+            contentUriHash: ethscription.contentUriHash,
             l1BlockHash: proofInfo.l1BlockHash,
-            creator: etsc.creator,
+            creator: ethscription.creator,
             currentOwner: currentOwner,
-            previousOwner: etsc.previousOwner,
-            esip6: etsc.esip6,
-            ethscriptionNumber: etsc.ethscriptionNumber,
+            previousOwner: ethscription.previousOwner,
+            esip6: ethscription.esip6,
+            ethscriptionNumber: ethscription.ethscriptionNumber,
             l1BlockNumber: proofInfo.l1BlockNumber,
             l2BlockNumber: proofInfo.l2BlockNumber,
             l2Timestamp: proofInfo.l2BlockTimestamp
@@ -160,6 +160,6 @@ contract EthscriptionsProver {
         bytes memory proofData = abi.encode(proof);
         L2_TO_L1_MESSAGE_PASSER.initiateWithdrawal(address(0), 0, proofData);
 
-        emit EthscriptionDataProofSent(ethscriptionTxHash, proofInfo.l2BlockNumber, proofInfo.l2BlockTimestamp);
+        emit EthscriptionDataProofSent(ethscriptionId, proofInfo.l2BlockNumber, proofInfo.l2BlockTimestamp);
     }
 }

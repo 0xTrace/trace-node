@@ -99,7 +99,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
         string memory dataUri = "data:,Hello World with failing token manager";
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: sha256(bytes(dataUri)),
             initialOwner: address(this),
             content: bytes("Hello World with failing token manager"),
@@ -181,7 +181,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
         string memory dataUri = "data:,{\"p\":\"test\",\"op\":\"deploy\",\"tick\":\"FAIL\",\"max\":\"1000\",\"lim\":\"10\"}";
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: sha256(bytes(dataUri)),
             initialOwner: address(this),
             content: bytes("{\"p\":\"test\",\"op\":\"deploy\",\"tick\":\"FAIL\",\"max\":\"1000\",\"lim\":\"10\"}"),

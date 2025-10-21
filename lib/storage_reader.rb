@@ -27,7 +27,7 @@ class StorageReader
       'type' => 'function',
       'stateMutability' => 'view',
       'inputs' => [
-        { 'name' => 'transactionHash', 'type' => 'bytes32' }
+        { 'name' => 'ethscriptionId', 'type' => 'bytes32' }
       ],
       'outputs' => [
         ETHSCRIPTION_STRUCT_ABI
@@ -38,7 +38,7 @@ class StorageReader
       'type' => 'function',
       'stateMutability' => 'view',
       'inputs' => [
-        { 'name' => 'transactionHash', 'type' => 'bytes32' }
+        { 'name' => 'ethscriptionId', 'type' => 'bytes32' }
       ],
       'outputs' => [
         { 'name' => '', 'type' => 'bytes' }
@@ -49,7 +49,7 @@ class StorageReader
       'type' => 'function',
       'stateMutability' => 'view',
       'inputs' => [
-        { 'name' => 'transactionHash', 'type' => 'bytes32' }
+        { 'name' => 'ethscriptionId', 'type' => 'bytes32' }
       ],
       'outputs' => [
         { 'name' => '', 'type' => 'address' }
@@ -69,7 +69,7 @@ class StorageReader
       'type' => 'function',
       'stateMutability' => 'view',
       'inputs' => [
-        { 'name' => 'txHash', 'type' => 'bytes32' }
+        { 'name' => 'ethscriptionId', 'type' => 'bytes32' }
       ],
       'outputs' => [
         { 'name' => 'ethscription', **ETHSCRIPTION_STRUCT_ABI },
@@ -203,29 +203,29 @@ class StorageReader
       nil
     end
 
-    def get_owner(token_id, block_tag: 'latest')
+    def get_owner(ethscription_id, block_tag: 'latest')
       # Build function signature
       function_sig = Eth::Util.keccak256('ownerOf(bytes32)')[0...4]
 
-      # Token ID is the transaction hash as uint256
-      token_id_bytes32 = format_bytes32(token_id)
+      # Parameter is the ethscription ID (bytes32)
+      ethscription_id_bytes32 = format_bytes32(ethscription_id)
 
       # Encode the parameter
-      calldata = function_sig + [token_id_bytes32].pack('H*')
+      calldata = function_sig + [ethscription_id_bytes32].pack('H*')
 
       # Make the eth_call
       result = eth_call('0x' + calldata.unpack1('H*'), block_tag)
       # Some nodes return 0x when the call yields no data
       return nil if result == '0x'
       # Nil indicates an RPC/network failure
-      raise StandardError, "RPC call failed for ownerOf #{token_id}" if result.nil?
+      raise StandardError, "RPC call failed for ownerOf #{ethscription_id}" if result.nil?
 
       # Decode the result - ownerOf returns a single address
       decoded = Eth::Abi.decode(['address'], result)
       Eth::Address.new(decoded[0]).to_s
     rescue EthRpcClient::ExecutionRevertedError => e
       # Contract reverted - token doesn't exist
-      Rails.logger.debug "Token #{token_id} doesn't exist (contract reverted): #{e.message}"
+      Rails.logger.debug "Ethscription #{ethscription_id} doesn't exist (contract reverted): #{e.message}"
       nil
     end
 

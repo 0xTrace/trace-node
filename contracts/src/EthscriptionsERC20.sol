@@ -20,8 +20,8 @@ contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
     //                      STATE VARIABLES
     // =============================================================
 
-    /// @notice The ethscription hash that deployed this token
-    bytes32 public deployTxHash;
+    /// @notice The ethscription ID that deployed this token
+    bytes32 public deployEthscriptionId;
 
     // =============================================================
     //                      CUSTOM ERRORS
@@ -48,16 +48,16 @@ contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
     /// @param name_ The token name
     /// @param symbol_ The token symbol
     /// @param cap_ The maximum supply cap (in 18 decimals)
-    /// @param deployTxHash_ The ethscription hash that deployed this token
+    /// @param deployEthscriptionId_ The ethscription ID that deployed this token
     function initialize(
         string memory name_,
         string memory symbol_,
         uint256 cap_,
-        bytes32 deployTxHash_
+        bytes32 deployEthscriptionId_
     ) external initializer {
         __ERC20_init(name_, symbol_);
         __ERC20Capped_init(cap_);
-        deployTxHash = deployTxHash_;
+        deployEthscriptionId = deployEthscriptionId_;
     }
 
     /// @notice Mint tokens (TokenManager only)

@@ -68,7 +68,7 @@ contract EthscriptionsProverTest is TestSetup {
             (EthscriptionsProver.EthscriptionDataProof)
         );
         
-        assertEq(decodedProof.ethscriptionTxHash, TEST_TX_HASH);
+        assertEq(decodedProof.ethscriptionId, TEST_TX_HASH);
         assertEq(decodedProof.creator, alice); // Creator should be alice due to vm.prank
         assertEq(decodedProof.currentOwner, bob);
         assertEq(decodedProof.previousOwner, alice);
@@ -102,7 +102,7 @@ contract EthscriptionsProverTest is TestSetup {
         vm.startPrank(alice);
         ethscriptions.createEthscription(
             Ethscriptions.CreateEthscriptionParams({
-                transactionHash: txHash1,
+                ethscriptionId: txHash1,
                 contentUriHash: keccak256("data:,test1"),
                 initialOwner: alice,
                 content: bytes("test1"),
@@ -116,7 +116,7 @@ contract EthscriptionsProverTest is TestSetup {
         vm.startPrank(bob);
         ethscriptions.createEthscription(
             Ethscriptions.CreateEthscriptionParams({
-                transactionHash: txHash2,
+                ethscriptionId: txHash2,
                 contentUriHash: keccak256("data:,test2"),
                 initialOwner: bob,
                 content: bytes("test2"),
@@ -136,7 +136,7 @@ contract EthscriptionsProverTest is TestSetup {
         vm.startPrank(charlie);
         ethscriptions.createEthscription(
             Ethscriptions.CreateEthscriptionParams({
-                transactionHash: txHash3,
+                ethscriptionId: txHash3,
                 contentUriHash: keccak256("data:,test3"),
                 initialOwner: charlie,
                 content: bytes("test3"),

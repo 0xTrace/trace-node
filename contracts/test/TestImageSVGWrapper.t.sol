@@ -17,7 +17,7 @@ contract TestImageSVGWrapper is TestSetup {
 
         vm.prank(alice);
         ethscriptions.createEthscription(Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: sha256(bytes(pngDataUri)),
             initialOwner: alice,
             content: pngContent,

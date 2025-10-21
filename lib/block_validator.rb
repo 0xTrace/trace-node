@@ -109,7 +109,7 @@ class BlockValidator
     genesis_file = Rails.root.join('contracts', 'script', 'genesisEthscriptions.json')
     genesis_data = JSON.parse(File.read(genesis_file))
 
-    # Extract all transaction hashes from the ethscriptions array
+    # Extract all ethscription IDs (L1 tx hashes) from the ethscriptions array
     genesis_data['ethscriptions'].map { |e| e['transaction_hash'] }
   end
 

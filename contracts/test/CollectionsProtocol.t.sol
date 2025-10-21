@@ -39,7 +39,7 @@ contract CollectionsProtocolTest is TestSetup {
         // Use the getter functions instead of direct mapping access
         CollectionsManager.CollectionState memory state = collectionsManager.getCollectionState(collectionId);
         assertNotEq(state.collectionContract, address(0), "Collection contract should be deployed");
-        assertEq(state.createTxHash, txHash, "Create tx hash should match");
+        assertEq(state.createEthscriptionId, txHash, "Create ethscription ID should match");
         assertEq(state.currentSize, 0, "Initial size should be 0");
         assertEq(state.locked, false, "Should not be locked");
 
@@ -77,7 +77,7 @@ contract CollectionsProtocolTest is TestSetup {
         bytes32 txHash = keccak256(abi.encodePacked("test_collection_tx", block.timestamp));
 
         Ethscriptions.CreateEthscriptionParams memory params = Ethscriptions.CreateEthscriptionParams({
-            transactionHash: txHash,
+            ethscriptionId: txHash,
             contentUriHash: keccak256(bytes(json)),
             initialOwner: alice,
             content: bytes(json),
@@ -105,7 +105,7 @@ contract CollectionsProtocolTest is TestSetup {
 
         // Verify the collection was created
         assertTrue(state.collectionContract != address(0), "Collection should exist");
-        assertEq(state.createTxHash, txHash);
+        assertEq(state.createEthscriptionId, txHash);
         assertEq(state.currentSize, 0);
         assertEq(state.locked, false);
 
@@ -159,7 +159,7 @@ contract CollectionsProtocolTest is TestSetup {
         CollectionsManager.CollectionState memory state = abi.decode(result, (CollectionsManager.CollectionState));
 
         assertTrue(state.collectionContract != address(0), "Should have collection contract");
-        assertEq(state.createTxHash, txHash);
+        assertEq(state.createEthscriptionId, txHash);
         assertEq(state.currentSize, 0);
         assertEq(state.locked, false);
 

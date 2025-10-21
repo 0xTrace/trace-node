@@ -46,7 +46,7 @@ contract EthscriptionsTokenTest is TestSetup {
         }
 
         return Ethscriptions.CreateEthscriptionParams({
-            transactionHash: transactionHash,
+            ethscriptionId: transactionHash,
             contentUriHash: contentUriHash,
             initialOwner: initialOwner,
             content: content,

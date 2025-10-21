@@ -585,16 +585,14 @@ module EthscriptionsTestHelper
     # Return all ethscription transactions (both successful and failed)
     imported_ethscriptions = ethscription_transactions
     ethscription_ids = imported_ethscriptions.flat_map do |tx|
-      case tx.ethscription_operation
-      when :create
+      op = tx.ethscription_operation.to_s
+      case op
+      when 'create'
         # For create operations, the ethscription ID is the transaction hash
         [tx.eth_transaction.tx_hash.to_hex]
-      when :transfer
-        if tx.transfer_ids.present?
-          tx.transfer_ids  # Multi-transfer
-        else
-          [tx.ethscription_id]  # Single transfer
-        end
+      when 'transfer', 'transfer_with_previous_owner'
+        # Always use array form for transfers
+        Array.wrap(tx.transfer_ids)
       else
         [tx.eth_transaction.tx_hash.to_hex]  # Fallback
       end
