@@ -368,8 +368,7 @@ contract Ethscriptions is ERC721EthscriptionsUpgradeable {
 
     /// @notice Get ethscription details (returns struct to avoid stack too deep)
     function getEthscription(bytes32 ethscriptionId) external view returns (Ethscription memory) {
-        Ethscription storage ethscription = _getEthscriptionOrRevert(ethscriptionId);
-        return ethscription;
+        return _getEthscriptionOrRevert(ethscriptionId);
     }
 
     /// @notice Get content for an ethscription
