@@ -40,7 +40,7 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
       expect(stored[:content]).to include('"tick":"testcoin"')
 
       # Validate protocol execution
-      expect(result[:protocol_event]).to eq("TokenDeployed"), "Protocol handler did not emit TokenDeployed event"
+      expect(result[:protocol_event]).to eq("FixedFungibleTokenDeployed"), "Protocol handler did not emit FixedFungibleTokenDeployed event"
       expect(result[:protocol_success]).to eq(true), "Protocol operation failed"
 
       # Validate token state in contract
@@ -85,7 +85,7 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
       mint_id = result[:ethscription_id]
 
       # Validate protocol execution
-      expect(result[:protocol_event]).to eq("TokenMinted"), "Protocol handler did not emit TokenMinted event"
+      expect(result[:protocol_event]).to eq("FixedFungibleTokenMinted"), "Protocol handler did not emit FixedFungibleTokenMinted event"
       expect(result[:protocol_success]).to eq(true), "Protocol operation failed"
       expect(result[:mint_amount]).to eq(1000), "Mint amount mismatch"
 
@@ -124,7 +124,7 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
       )
 
       expect(transfer_result[:success]).to eq(true), "Ethscription transfer failed"
-      expect(transfer_result[:protocol_event]).to eq("TokenTransferred"), "Token transfer event not emitted"
+      expect(transfer_result[:protocol_event]).to eq("FixedFungibleTokenTransferred"), "Fixed-fungible transfer event not emitted"
 
       # Validate token balances updated
       bob_balance = get_token_balance("transfertest", bob)
@@ -134,7 +134,7 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
       expect(charlie_balance).to eq(1000), "Charlie should have 1000 tokens after transfer"
 
       # Validate mint record updated
-      # Note: TokenManager doesn't track current owner in TokenItem
+      # Note: FixedFungibleProtocolHandler doesn't track current owner in TokenItem
       # Token ownership is tracked via ERC20 balances instead
     end
   end
@@ -280,7 +280,7 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
       expect(result[:success]).to eq(true), "Ethscription should be created"
       # Protocol is extracted by GenericProtocolExtractor
       expect(result[:protocol_extracted]).to eq(true), "Protocol should be extracted by generic extractor"
-      # The generic extractor correctly encodes the data for TokenManager
+      # The generic extractor correctly encodes the data for FixedFungibleProtocolHandler
       # so it might actually succeed
       # Just verify the ethscription was created successfully
     end
@@ -345,13 +345,13 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
         when 'ProtocolHandlerFailed'
           protocol_results[:protocol_success] = false
           protocol_results[:protocol_error] = event[:reason]
-        when 'TokenDeployed'
-          protocol_results[:protocol_event] = 'TokenDeployed'
-        when 'TokenMinted'
-          protocol_results[:protocol_event] = 'TokenMinted'
+        when 'FixedFungibleTokenDeployed'
+          protocol_results[:protocol_event] = 'FixedFungibleTokenDeployed'
+        when 'FixedFungibleTokenMinted'
+          protocol_results[:protocol_event] = 'FixedFungibleTokenMinted'
           protocol_results[:mint_amount] = event[:amount]
-        when 'TokenTransferred'
-          protocol_results[:protocol_event] = 'TokenTransferred'
+        when 'FixedFungibleTokenTransferred'
+          protocol_results[:protocol_event] = 'FixedFungibleTokenTransferred'
         end
       end
     end
@@ -381,8 +381,8 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
       events = ProtocolEventReader.parse_receipt_events(receipt)
 
       events.each do |event|
-        if event[:event] == "TokenTransferred"
-          transfer_results[:protocol_event] = "TokenTransferred"
+        if event[:event] == "FixedFungibleTokenTransferred"
+          transfer_results[:protocol_event] = "FixedFungibleTokenTransferred"
         end
       end
     end
@@ -403,8 +403,8 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
 
   # Use actual contract state readers
   def get_token_state(tick)
-    require_relative '../../lib/token_reader'
-    token = TokenReader.get_token(tick)
+    require_relative '../../lib/fixed_fungible_reader'
+    token = FixedFungibleReader.get_token(tick)
 
     return nil if token.nil?
 
@@ -425,8 +425,8 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
   end
 
   def get_mint_record(ethscription_id)
-    require_relative '../../lib/token_reader'
-    item = TokenReader.get_token_item(ethscription_id)
+    require_relative '../../lib/fixed_fungible_reader'
+    item = FixedFungibleReader.get_token_item(ethscription_id)
 
     return nil if item.nil?
 
@@ -443,8 +443,8 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
   end
 
   def get_token_balance(tick, address)
-    require_relative '../../lib/token_reader'
-    TokenReader.get_token_balance(tick, address)
+    require_relative '../../lib/fixed_fungible_reader'
+    FixedFungibleReader.get_token_balance(tick, address)
   rescue => e
     Rails.logger.error "Failed to get token balance: #{e.message}"
     0
@@ -467,13 +467,13 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
   end
 
   def token_exists?(tick)
-    require_relative '../../lib/token_reader'
-    TokenReader.token_exists?(tick)
+    require_relative '../../lib/fixed_fungible_reader'
+    FixedFungibleReader.token_exists?(tick)
   end
 
   def token_item_exists?(ethscription_id)
-    require_relative '../../lib/token_reader'
-    item = TokenReader.get_token_item(ethscription_id)
+    require_relative '../../lib/fixed_fungible_reader'
+    item = FixedFungibleReader.get_token_item(ethscription_id)
     return false if item.nil?
     item[:deployTxHash] != '0x0000000000000000000000000000000000000000000000000000000000000000'
   end

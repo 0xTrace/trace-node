@@ -3,15 +3,15 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import {LibString} from "solady/utils/LibString.sol";
-import "./EthscriptionsERC20.sol";
+import "./FixedFungibleERC20.sol";
 import "./Ethscriptions.sol";
 import "./libraries/Predeploys.sol";
 import "./interfaces/IProtocolHandler.sol";
 
-/// @title Token Manager for Ethscriptions ERC-20 Protocol
-/// @notice Manages ERC-20 token deployments and minting through the Ethscriptions protocol
-/// @dev Implements IProtocolHandler for integration with Ethscriptions contract
-contract TokenManager is IProtocolHandler {
+/// @title FixedFungibleProtocolHandler
+/// @notice Implements the fixed-fungible token protocol enforced via Ethscriptions transfers
+/// @dev Deploys and controls FixedFungible ERC-20 clones; callable only by the Ethscriptions contract
+contract FixedFungibleProtocolHandler is IProtocolHandler {
     using Clones for address;
     using LibString for string;
 
@@ -50,8 +50,11 @@ contract TokenManager is IProtocolHandler {
     //                         CONSTANTS
     // =============================================================
 
-    address public constant erc20Template = Predeploys.ERC20_TEMPLATE_IMPLEMENTATION;
+    /// @dev Deterministic template contract used for clone deployments
+    address public constant fixedFungibleTemplate = Predeploys.FIXED_FUNGIBLE_TEMPLATE_IMPLEMENTATION;
     address public constant ethscriptions = Predeploys.ETHSCRIPTIONS;
+    string public constant CANONICAL_PROTOCOL = "fixed-fungible";
+    string public constant PRETTY_PROTOCOL = "Fixed-Fungible";
 
     // =============================================================
     //                      STATE VARIABLES
@@ -83,7 +86,7 @@ contract TokenManager is IProtocolHandler {
     //                          EVENTS
     // =============================================================
 
-    event TokenDeployed(
+    event FixedFungibleTokenDeployed(
         bytes32 indexed deployEthscriptionId,
         address indexed tokenAddress,
         string tick,
@@ -91,14 +94,14 @@ contract TokenManager is IProtocolHandler {
         uint256 mintAmount
     );
 
-    event TokenMinted(
+    event FixedFungibleTokenMinted(
         bytes32 indexed deployEthscriptionId,
         address indexed to,
         uint256 amount,
         bytes32 ethscriptionId
     );
 
-    event TokenTransferred(
+    event FixedFungibleTokenTransferred(
         bytes32 indexed deployEthscriptionId,
         address indexed from,
         address indexed to,
@@ -138,15 +141,15 @@ contract TokenManager is IProtocolHandler {
         if (deployOp.maxSupply % deployOp.mintAmount != 0) revert MaxSupplyNotDivisibleByMintAmount();
 
         // Deploy ERC20 clone with CREATE2 using tickKey as salt for deterministic address
-        address tokenAddress = erc20Template.cloneDeterministic(tickKey);
+        address tokenAddress = fixedFungibleTemplate.cloneDeterministic(tickKey);
 
         // Initialize the clone
-        string memory name = string.concat(protocolName(), " ", deployOp.tick);
+        string memory name = string.concat(PRETTY_PROTOCOL, " ", deployOp.tick);
         string memory symbol = LibString.upper(deployOp.tick);
 
         // Initialize with max supply in 18 decimals
         // User maxSupply "1000000" means 1000000 * 10^18 smallest units
-        EthscriptionsERC20(tokenAddress).initialize(
+        FixedFungibleERC20(tokenAddress).initialize(
             name,
             symbol,
             deployOp.maxSupply * 10**18,
@@ -166,7 +169,13 @@ contract TokenManager is IProtocolHandler {
         // Map deploy ID to tick key for lookups
         deployToTick[ethscriptionId] = tickKey;
 
-        emit TokenDeployed(ethscriptionId, tokenAddress, deployOp.tick, deployOp.maxSupply, deployOp.mintAmount);
+        emit FixedFungibleTokenDeployed(
+            ethscriptionId,
+            tokenAddress,
+            deployOp.tick,
+            deployOp.maxSupply,
+            deployOp.mintAmount
+        );
     }
 
     /// @notice Handle mint operation
@@ -202,12 +211,12 @@ contract TokenManager is IProtocolHandler {
         });
 
         // Mint tokens to the initial owner - convert to 18 decimals
-        EthscriptionsERC20(token.tokenContract).mint(initialOwner, mintOp.amount * 10**18);
+        FixedFungibleERC20(token.tokenContract).mint(initialOwner, mintOp.amount * 10**18);
 
         // Update total minted after successful mint
         token.totalMinted += mintOp.amount;
 
-        emit TokenMinted(token.deployEthscriptionId, initialOwner, mintOp.amount, ethscriptionId);
+        emit FixedFungibleTokenMinted(token.deployEthscriptionId, initialOwner, mintOp.amount, ethscriptionId);
     }
 
     /// @notice Handle transfer notification from Ethscriptions contract
@@ -229,9 +238,9 @@ contract TokenManager is IProtocolHandler {
         TokenInfo storage token = tokensByTick[tickKey];
 
         // Force transfer tokens (shadow transfer) - convert to 18 decimals
-        EthscriptionsERC20(token.tokenContract).forceTransfer(from, to, item.amount * 10**18);
+        FixedFungibleERC20(token.tokenContract).forceTransfer(from, to, item.amount * 10**18);
 
-        emit TokenTransferred(item.deployEthscriptionId, from, to, item.amount, ethscriptionId);
+        emit FixedFungibleTokenTransferred(item.deployEthscriptionId, from, to, item.amount, ethscriptionId);
     }
 
     // =============================================================
@@ -282,7 +291,7 @@ contract TokenManager is IProtocolHandler {
         }
 
         // Predict using CREATE2
-        return Clones.predictDeterministicAddress(erc20Template, tickKey, address(this));
+        return Clones.predictDeterministicAddress(fixedFungibleTemplate, tickKey, address(this));
     }
 
     /// @notice Check if an ethscription is a token item
@@ -313,7 +322,7 @@ contract TokenManager is IProtocolHandler {
     /// @notice Returns human-readable protocol name
     /// @return The protocol name
     function protocolName() public pure override returns (string memory) {
-        return "erc-20";
+        return CANONICAL_PROTOCOL;
     }
 
     // =============================================================
@@ -325,6 +334,6 @@ contract TokenManager is IProtocolHandler {
     /// @return The tick key for storage lookups
     function _getTickKey(string memory tick) private pure returns (bytes32) {
         // Use the protocol name from this handler
-        return keccak256(abi.encode("erc-20", tick));
+        return keccak256(abi.encode(CANONICAL_PROTOCOL, tick));
     }
 }

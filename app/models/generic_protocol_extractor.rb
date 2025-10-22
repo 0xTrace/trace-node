@@ -572,9 +572,9 @@ class GenericProtocolExtractor
     [type_hint, [hex_part.downcase].pack('H*')]
   end
 
-  # Helper method for legacy token protocol (maintains compatibility)
+  # Helper method for fixed-fungible protocol parsing (shared with protocol extractor)
   def self.extract_token_params(content_uri)
     # Use the strict regex-based extractor for token protocol
-    TokenParamsExtractor.extract(content_uri)
+    FixedFungibleTokenParamsExtractor.extract(content_uri)
   end
 end

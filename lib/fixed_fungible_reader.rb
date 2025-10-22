@@ -1,7 +1,7 @@
-class TokenReader
-  TOKEN_MANAGER_ADDRESS = '0x3300000000000000000000000000000000000002'
+class FixedFungibleReader
+  FIXED_FUNGIBLE_HANDLER_ADDRESS = '0x3300000000000000000000000000000000000002'
 
-  # Token struct from TokenManager.sol
+  # Token struct returned by FixedFungibleProtocolHandler
   TOKEN_STRUCT = {
     'components' => [
       { 'name' => 'tick', 'type' => 'string' },
@@ -36,7 +36,7 @@ class TokenReader
 
     # Make the call
     result = EthRpcClient.l2.eth_call(
-      to: TOKEN_MANAGER_ADDRESS,
+      to: FIXED_FUNGIBLE_HANDLER_ADDRESS,
       data: data,
       block_number: block_tag
     )
@@ -59,7 +59,7 @@ class TokenReader
     {
       tokenContract: token_tuple[0],
       deployTxHash: '0x' + token_tuple[1].unpack1('H*'),
-      protocol: 'erc-20',  # Always erc-20 for TokenManager
+      protocol: 'fixed-fungible',
       tick: token_tuple[2],
       maxSupply: token_tuple[3],
       mintLimit: token_tuple[4], # mintAmount field is used as mintLimit
@@ -81,7 +81,7 @@ class TokenReader
     token[:tokenContract] != '0x0000000000000000000000000000000000000000'
   end
 
-  # Note: TokenManager doesn't track mints by tick+id, it tracks token items by ethscription hash
+  # Note: FixedFungibleProtocolHandler doesn't track mints by tick+id, it tracks token items by ethscription hash
   # This method is kept for compatibility but may need redesign
   def self.get_token_item(ethscription_tx_hash, block_tag: 'latest')
     # Encode function call for getTokenItem(bytes32)
@@ -99,7 +99,7 @@ class TokenReader
 
     # Make the call
     result = EthRpcClient.l2.eth_call(
-      to: TOKEN_MANAGER_ADDRESS,
+      to: FIXED_FUNGIBLE_HANDLER_ADDRESS,
       data: data,
       block_number: block_tag
     )
@@ -124,15 +124,15 @@ class TokenReader
     nil
   end
 
-  # Legacy compatibility - mints aren't tracked by ID in new TokenManager
+  # Legacy compatibility - mints aren't tracked by ID in FixedFungibleProtocolHandler
   def self.get_mint(tick, mint_id, block_tag: 'latest')
     # This would need to be reimplemented if mint tracking by ID is needed
-    # For now, return nil as TokenManager doesn't support this
+    # For now, return nil as FixedFungibleProtocolHandler doesn't support this
     nil
   end
 
   def self.mint_exists?(tick, mint_id, block_tag: 'latest')
-    # TokenManager doesn't track mints by tick+id
+    # FixedFungibleProtocolHandler doesn't track mints by tick+id
     false
   end
 

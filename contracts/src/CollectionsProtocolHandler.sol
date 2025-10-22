@@ -3,12 +3,12 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import {LibString} from "solady/utils/LibString.sol";
-import "./EthscriptionERC721.sol";
+import "./CollectionsERC721.sol";
 import "./Ethscriptions.sol";
 import "./libraries/Predeploys.sol";
 import "./interfaces/IProtocolHandler.sol";
 
-contract CollectionsManager is IProtocolHandler {
+contract CollectionsProtocolHandler is IProtocolHandler {
     using Clones for address;
     using LibString for string;
 
@@ -96,7 +96,7 @@ contract CollectionsManager is IProtocolHandler {
         // Note: Similar to ItemData but without ethscriptionId (can't change)
     }
 
-    address public constant erc721Template = Predeploys.ERC721_TEMPLATE_IMPLEMENTATION;
+    address public constant collectionsTemplate = Predeploys.COLLECTIONS_TEMPLATE_IMPLEMENTATION;
     address public constant ethscriptions = Predeploys.ETHSCRIPTIONS;
 
     // Track deployed collections by ID
@@ -157,10 +157,10 @@ contract CollectionsManager is IProtocolHandler {
         uint256 totalSupply = metadata.totalSupply;
 
         // Deploy ERC721 clone with CREATE2 using collectionId as salt for deterministic address
-        address collectionContract = erc721Template.cloneDeterministic(collectionId);
+        address collectionContract = collectionsTemplate.cloneDeterministic(collectionId);
 
         // Initialize the clone with basic info
-        EthscriptionERC721(collectionContract).initialize(
+        CollectionsERC721(collectionContract).initialize(
             metadata.name,
             metadata.symbol,
             collectionId
@@ -211,7 +211,7 @@ contract CollectionsManager is IProtocolHandler {
         }
 
         // Add each item with full metadata
-        EthscriptionERC721 collectionContract = EthscriptionERC721(collection.collectionContract);
+        CollectionsERC721 collectionContract = CollectionsERC721(collection.collectionContract);
 
         for (uint256 i = 0; i < addOp.items.length; i++) {
             ItemData memory itemData = addOp.items[i];
@@ -271,7 +271,7 @@ contract CollectionsManager is IProtocolHandler {
         require(currentOwner == sender, "Only collection owner can remove items");
 
         // Remove each ethscription from the collection
-        EthscriptionERC721 collectionContract = EthscriptionERC721(collection.collectionContract);
+        CollectionsERC721 collectionContract = CollectionsERC721(collection.collectionContract);
         for (uint256 i = 0; i < removeOp.ethscriptionIds.length; i++) {
             bytes32 ethscriptionId = removeOp.ethscriptionIds[i];
 
@@ -374,7 +374,7 @@ contract CollectionsManager is IProtocolHandler {
         require(currentOwner == sender, "Only collection owner can lock");
 
         collection.locked = true;
-        EthscriptionERC721(collection.collectionContract).lockCollection();
+        CollectionsERC721(collection.collectionContract).lockCollection();
         emit CollectionLocked(collectionId);
         emit ProtocolHandlerSuccess(txHash, protocolName());
     }
@@ -389,7 +389,7 @@ contract CollectionsManager is IProtocolHandler {
         CollectionState memory collection = collectionState[collectionId];
         require(collection.collectionContract != address(0), "Collection does not exist");
 
-        EthscriptionERC721 collectionContract = EthscriptionERC721(collection.collectionContract);
+        CollectionsERC721 collectionContract = CollectionsERC721(collection.collectionContract);
 
         // Sync ownership for specified ethscriptions in this collection
         for (uint256 i = 0; i < ethscriptionIds.length; i++) {
@@ -419,7 +419,7 @@ contract CollectionsManager is IProtocolHandler {
         //     CollectionState memory collection = collectionState[item.collectionId];
         //     if (collection.collectionContract != address(0)) {
         //         // Sync the ownership in the ERC721 contract
-        //         EthscriptionERC721(collection.collectionContract).syncOwnership(item.tokenId);
+        //         CollectionsERC721(collection.collectionContract).syncOwnership(item.tokenId);
         //     }
         // }
     }
@@ -459,7 +459,7 @@ contract CollectionsManager is IProtocolHandler {
         }
 
         // Predict using CREATE2
-        return Clones.predictDeterministicAddress(erc721Template, collectionId, address(this));
+        return Clones.predictDeterministicAddress(collectionsTemplate, collectionId, address(this));
     }
 
     function getAllCollections() external view returns (bytes32[] memory) {

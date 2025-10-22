@@ -4,17 +4,17 @@ pragma solidity 0.8.24;
 import "./ERC20NullOwnerCappedUpgradeable.sol";
 import "./libraries/Predeploys.sol";
 
-/// @title EthscriptionsERC20
-/// @notice ERC20 with cap that supports null address ownership
-/// @dev Only TokenManager can mint/transfer. User-initiated transfers are disabled.
-contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
+/// @title FixedFungibleERC20
+/// @notice ERC-20 clone whose balances are controlled by the FixedFungible protocol handler
+/// @dev User-initiated transfers/approvals are disabled; only the handler can mutate balances.
+contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
 
     // =============================================================
     //                         CONSTANTS
     // =============================================================
 
-    /// @notice The TokenManager contract that controls this token
-    address public constant tokenManager = Predeploys.TOKEN_MANAGER;
+    /// @notice The FixedFungible protocol handler that controls this token
+    address public constant protocolHandler = Predeploys.FIXED_FUNGIBLE_HANDLER;
 
     // =============================================================
     //                      STATE VARIABLES
@@ -27,7 +27,7 @@ contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
     //                      CUSTOM ERRORS
     // =============================================================
 
-    error OnlyTokenManager();
+    error OnlyProtocolHandler();
     error TransfersOnlyViaEthscriptions();
     error ApprovalsNotAllowed();
 
@@ -35,8 +35,8 @@ contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
     //                         MODIFIERS
     // =============================================================
 
-    modifier onlyTokenManager() {
-        if (msg.sender != tokenManager) revert OnlyTokenManager();
+    modifier onlyProtocolHandler() {
+        if (msg.sender != protocolHandler) revert OnlyProtocolHandler();
         _;
     }
 
@@ -60,20 +60,20 @@ contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
         deployEthscriptionId = deployEthscriptionId_;
     }
 
-    /// @notice Mint tokens (TokenManager only)
+    /// @notice Mint tokens (protocol handler only)
     /// @dev Allows minting to address(0) for null ownership
     /// @param to The recipient address (can be address(0))
     /// @param amount The amount to mint (in 18 decimals)
-    function mint(address to, uint256 amount) external onlyTokenManager {
+    function mint(address to, uint256 amount) external onlyProtocolHandler {
         _mint(to, amount);
     }
 
-    /// @notice Force transfer tokens (TokenManager only)
+    /// @notice Force transfer tokens (protocol handler only)
     /// @dev Allows transfers to/from address(0) for null ownership
     /// @param from The sender address (can be address(0))
     /// @param to The recipient address (can be address(0))
     /// @param amount The amount to transfer (in 18 decimals)
-    function forceTransfer(address from, address to, uint256 amount) external onlyTokenManager {
+    function forceTransfer(address from, address to, uint256 amount) external onlyProtocolHandler {
         _update(from, to, amount);
     }
 
@@ -94,7 +94,7 @@ contract EthscriptionsERC20 is ERC20NullOwnerCappedUpgradeable {
     }
 
     /// @notice Approvals are disabled
-    /// @dev All transfers are controlled by the TokenManager
+    /// @dev All transfers are controlled by the FixedFungibleProtocolHandler
     function approve(address, uint256) public pure override returns (bool) {
         revert ApprovalsNotAllowed();
     }

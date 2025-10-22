@@ -8,10 +8,10 @@ class ProtocolEventReader
     'ProtocolHandlerSuccess' => 'ProtocolHandlerSuccess(bytes32,string,bytes)',
     'ProtocolHandlerFailed' => 'ProtocolHandlerFailed(bytes32,string,bytes)',
 
-    # TokenManager.sol events
-    'TokenDeployed' => 'TokenDeployed(bytes32,address,string,uint256,uint256)',
-    'TokenMinted' => 'TokenMinted(bytes32,address,uint256,bytes32)',
-    'TokenTransferred' => 'TokenTransferred(bytes32,address,address,uint256,bytes32)',
+    # FixedFungibleProtocolHandler.sol events
+    'FixedFungibleTokenDeployed' => 'FixedFungibleTokenDeployed(bytes32,address,string,uint256,uint256)',
+    'FixedFungibleTokenMinted' => 'FixedFungibleTokenMinted(bytes32,address,uint256,bytes32)',
+    'FixedFungibleTokenTransferred' => 'FixedFungibleTokenTransferred(bytes32,address,address,uint256,bytes32)',
 
     # CollectionsManager.sol events
     # CollectionsManager.sol events (match actual signatures)
@@ -60,12 +60,12 @@ class ProtocolEventReader
       parse_protocol_handler_success(log)
     when 'ProtocolHandlerFailed'
       parse_protocol_handler_failed(log)
-    when 'TokenDeployed'
-      parse_token_deployed(log)
-    when 'TokenMinted'
-      parse_token_minted(log)
-    when 'TokenTransferred'
-      parse_token_transferred(log)
+    when 'FixedFungibleTokenDeployed'
+      parse_fixed_fungible_token_deployed(log)
+    when 'FixedFungibleTokenMinted'
+      parse_fixed_fungible_token_minted(log)
+    when 'FixedFungibleTokenTransferred'
+      parse_fixed_fungible_token_transferred(log)
     when 'CollectionCreated'
       parse_collection_created(log)
     when 'ItemsAdded'
@@ -201,8 +201,8 @@ class ProtocolEventReader
     }
   end
 
-  def self.parse_token_deployed(log)
-    # TokenDeployed(bytes32 indexed deployTxHash, address indexed tokenAddress, string tick, uint256 maxSupply, uint256 mintAmount)
+  def self.parse_fixed_fungible_token_deployed(log)
+    # FixedFungibleTokenDeployed(bytes32 indexed deployTxHash, address indexed tokenAddress, string tick, uint256 maxSupply, uint256 mintAmount)
     deploy_tx_hash = log['topics'][1]
     token_address = '0x' + log['topics'][2][-40..] if log['topics'][2]  # Last 20 bytes of topic
 
@@ -210,7 +210,7 @@ class ProtocolEventReader
     decoded = Eth::Abi.decode(['string', 'uint256', 'uint256'], data)
 
     {
-      event: 'TokenDeployed',
+      event: 'FixedFungibleTokenDeployed',
       deploy_tx_hash: deploy_tx_hash,
       token_contract: token_address,
       tick: decoded[0],
@@ -218,12 +218,12 @@ class ProtocolEventReader
       mint_amount: decoded[2]
     }
   rescue => e
-    Rails.logger.error "Failed to parse TokenDeployed: #{e.message}"
+    Rails.logger.error "Failed to parse FixedFungibleTokenDeployed: #{e.message}"
     nil
   end
 
-  def self.parse_token_minted(log)
-    # TokenMinted(bytes32 indexed deployTxHash, address indexed to, uint256 amount, bytes32 ethscriptionTxHash)
+  def self.parse_fixed_fungible_token_minted(log)
+    # FixedFungibleTokenMinted(bytes32 indexed deployTxHash, address indexed to, uint256 amount, bytes32 ethscriptionTxHash)
     deploy_tx_hash = log['topics'][1]
     to_address = '0x' + log['topics'][2][-40..] if log['topics'][2]  # Last 20 bytes
 
@@ -231,19 +231,19 @@ class ProtocolEventReader
     decoded = Eth::Abi.decode(['uint256', 'bytes32'], data)
 
     {
-      event: 'TokenMinted',
+      event: 'FixedFungibleTokenMinted',
       deploy_tx_hash: deploy_tx_hash,
       to: to_address,
       amount: decoded[0],
       ethscription_tx_hash: '0x' + decoded[1].unpack1('H*')
     }
   rescue => e
-    Rails.logger.error "Failed to parse TokenMinted: #{e.message}"
+    Rails.logger.error "Failed to parse FixedFungibleTokenMinted: #{e.message}"
     nil
   end
 
-  def self.parse_token_transferred(log)
-    # TokenTransferred(bytes32 indexed deployTxHash, address indexed from, address indexed to, uint256 amount, bytes32 ethscriptionTxHash)
+  def self.parse_fixed_fungible_token_transferred(log)
+    # FixedFungibleTokenTransferred(bytes32 indexed deployTxHash, address indexed from, address indexed to, uint256 amount, bytes32 ethscriptionTxHash)
     deploy_tx_hash = log['topics'][1]
     from_address = '0x' + log['topics'][2][-40..] if log['topics'][2]  # Last 20 bytes
     to_address = '0x' + log['topics'][3][-40..] if log['topics'][3]
@@ -252,7 +252,7 @@ class ProtocolEventReader
     decoded = Eth::Abi.decode(['uint256', 'bytes32'], data)
 
     {
-      event: 'TokenTransferred',
+      event: 'FixedFungibleTokenTransferred',
       deploy_tx_hash: deploy_tx_hash,
       from: from_address,
       to: to_address,
@@ -260,7 +260,7 @@ class ProtocolEventReader
       ethscription_tx_hash: '0x' + decoded[1].unpack1('H*')
     }
   rescue => e
-    Rails.logger.error "Failed to parse TokenTransferred: #{e.message}"
+    Rails.logger.error "Failed to parse FixedFungibleTokenTransferred: #{e.message}"
     nil
   end
 
