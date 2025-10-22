@@ -63,7 +63,6 @@ contract Proxy {
         bytes calldata _data
     )
         public
-        payable
         virtual
         proxyCallIfNotAdmin
         returns (bytes memory)
