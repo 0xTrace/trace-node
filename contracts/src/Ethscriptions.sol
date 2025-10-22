@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "./ERC721EthscriptionsUpgradeable.sol";
+import "./ERC721EthscriptionsSequentialEnumerableUpgradeable.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import "./libraries/SSTORE2ChunkedStorageLib.sol";
 import "./libraries/EthscriptionsRendererLib.sol";
@@ -14,7 +14,7 @@ import "./libraries/Constants.sol";
 /// @title Ethscriptions ERC-721 Contract
 /// @notice Mints Ethscriptions as ERC-721 tokens based on L1 transaction data
 /// @dev Uses ethscription number as token ID and name, while transaction hash remains the primary identifier for function calls
-contract Ethscriptions is ERC721EthscriptionsUpgradeable {
+contract Ethscriptions is ERC721EthscriptionsSequentialEnumerableUpgradeable {
     using LibString for *;
     using SSTORE2ChunkedStorageLib for address[];
     using EthscriptionsRendererLib for Ethscription;
