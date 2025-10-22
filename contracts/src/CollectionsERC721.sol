@@ -2,18 +2,20 @@
 pragma solidity 0.8.24;
 
 // import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
-import "./ERC721EthscriptionsUpgradeable.sol";
+import "./ERC721EthscriptionsEnumerableUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "./Ethscriptions.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {Base64} from "solady/utils/Base64.sol";
 import "./CollectionsProtocolHandler.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
 /// @title CollectionsERC721
 /// @notice ERC-721 contract for an Ethscription collection
 /// @dev Maintains internal state but overrides ownerOf to delegate to Ethscriptions contract
-contract CollectionsERC721 is ERC721EthscriptionsUpgradeable {
+contract CollectionsERC721 is ERC721EthscriptionsEnumerableUpgradeable {
     using LibString for *;
 
     /// @notice The main Ethscriptions contract
@@ -118,7 +120,12 @@ contract CollectionsERC721 is ERC721EthscriptionsUpgradeable {
     }
 
     // Override ownerOf to delegate to Ethscriptions contract
-    function ownerOf(uint256 tokenId) public view override returns (address) {
+    function ownerOf(uint256 tokenId)
+        public
+        view
+        override(ERC721EthscriptionsUpgradeable, IERC721)
+        returns (address)
+    {
         // Check if token exists in collection
         if (!_tokenExists(tokenId)) {
             revert("Token does not exist");
@@ -137,7 +144,12 @@ contract CollectionsERC721 is ERC721EthscriptionsUpgradeable {
     }
 
     // Override tokenURI to generate full metadata JSON
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override(ERC721EthscriptionsUpgradeable)
+        returns (string memory)
+    {
         if (!_tokenExists(tokenId)) {
             revert("Token does not exist");
         }
@@ -221,20 +233,36 @@ contract CollectionsERC721 is ERC721EthscriptionsUpgradeable {
     }
 
     // Block external transfers - only internal _transfer is allowed for syncing
-    function transferFrom(address, address, uint256) public pure override {
+    function transferFrom(address, address, uint256)
+        public
+        pure
+        override(ERC721EthscriptionsUpgradeable, IERC721)
+    {
         revert TransferNotAllowed();
     }
 
-    function safeTransferFrom(address, address, uint256, bytes memory) public pure override {
+    function safeTransferFrom(address, address, uint256, bytes memory)
+        public
+        pure
+        override(ERC721EthscriptionsUpgradeable, IERC721)
+    {
         revert TransferNotAllowed();
     }
 
     // Block approvals - not needed for non-transferable tokens
-    function approve(address, uint256) public pure override {
+    function approve(address, uint256)
+        public
+        pure
+        override(ERC721EthscriptionsUpgradeable, IERC721)
+    {
         revert TransferNotAllowed();
     }
 
-    function setApprovalForAll(address, bool) public pure override {
+    function setApprovalForAll(address, bool)
+        public
+        pure
+        override(ERC721EthscriptionsUpgradeable, IERC721)
+    {
         revert TransferNotAllowed();
     }
 }
