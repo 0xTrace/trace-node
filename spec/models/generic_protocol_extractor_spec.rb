@@ -432,14 +432,14 @@ RSpec.describe GenericProtocolExtractor do
       end
     end
 
-    context 'backwards compatibility' do
-      it 'can still use TokenParamsExtractor for erc-20' do
+    context 'fixed fungible extraction helper' do
+      it 'uses FixedFungibleTokenParamsExtractor for erc-20 inscriptions' do
         content_uri = 'data:,{"p":"erc-20","op":"mint","tick":"punk","id":"1","amt":"100"}'
 
         # The token protocol should still use its strict extractor
         token_params = GenericProtocolExtractor.extract_token_params(content_uri)
 
-        expect(token_params).to eq(['mint'.b, 'erc-20'.b, 'punk'.b, 1, 0, 100])
+        expect(token_params).to eq(['mint'.b, 'fixed-fungible'.b, 'punk'.b, 1, 0, 100])
       end
     end
 

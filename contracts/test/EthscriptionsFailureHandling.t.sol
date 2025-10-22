@@ -2,14 +2,14 @@
 pragma solidity ^0.8.24;
 
 import "./TestSetup.sol";
-import "../src/TokenManager.sol";
+import "../src/FixedFungibleProtocolHandler.sol";
 import "../src/EthscriptionsProver.sol";
 import "forge-std/console.sol";
 
 // Mock contracts that can be configured to fail
-contract FailingTokenManager is TokenManager {
+contract FailingFixedFungibleProtocolHandler is FixedFungibleProtocolHandler {
     bool public shouldFail;
-    string public failMessage = "TokenManager intentionally failed";
+    string public failMessage = "FixedFungibleProtocolHandler intentionally failed";
 
     function setShouldFail(bool _shouldFail) external {
         shouldFail = _shouldFail;
@@ -64,7 +64,7 @@ contract FailingProver is EthscriptionsProver {
 }
 
 contract EthscriptionsFailureHandlingTest is TestSetup {
-    FailingTokenManager failingTokenManager;
+    FailingFixedFungibleProtocolHandler failingFixedFungibleProtocolHandler;
     FailingProver failingProver;
 
     event ProtocolHandlerFailed(
@@ -77,23 +77,23 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
         super.setUp();
 
         // Deploy failing mocks
-        failingTokenManager = new FailingTokenManager();
+        failingFixedFungibleProtocolHandler = new FailingFixedFungibleProtocolHandler();
         failingProver = new FailingProver();
 
         // Replace the token manager and prover with our mocks
         // We need to etch them at the predeploy addresses
-        vm.etch(Predeploys.TOKEN_MANAGER, address(failingTokenManager).code);
+        vm.etch(Predeploys.FIXED_FUNGIBLE_HANDLER, address(failingFixedFungibleProtocolHandler).code);
         vm.etch(Predeploys.ETHSCRIPTIONS_PROVER, address(failingProver).code);
 
         // Update our references
-        tokenManager = TokenManager(Predeploys.TOKEN_MANAGER);
+        fixedFungibleHandler = FixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER);
         prover = EthscriptionsProver(Predeploys.ETHSCRIPTIONS_PROVER);
     }
 
-    function testCreateEthscriptionWithTokenManagerFailure() public {
-        // Configure TokenManager to fail
-        FailingTokenManager(Predeploys.TOKEN_MANAGER).setShouldFail(true);
-        FailingTokenManager(Predeploys.TOKEN_MANAGER).setFailMessage("Token operation rejected");
+    function testCreateEthscriptionWithFixedFungibleProtocolHandlerFailure() public {
+        // Configure FixedFungibleProtocolHandler to fail
+        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(true);
+        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setFailMessage("Token operation rejected");
 
         bytes32 txHash = keccak256("test_tx_1");
         string memory dataUri = "data:,Hello World with failing token manager";
@@ -114,7 +114,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
         // Don't expect the ProtocolHandlerFailed event since this mock doesn't emit it properly
 
-        // Create ethscription - should succeed despite TokenManager failure
+        // Create ethscription - should succeed despite FixedFungibleProtocolHandler failure
         uint256 tokenId = ethscriptions.createEthscription(params);
 
         // Verify the ethscription was created successfully
@@ -145,7 +145,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
         assertEq(ethscriptions.totalSupply(), 12);
     }
 
-    function testTransferWithTokenManagerFailure() public {
+    function testTransferWithFixedFungibleProtocolHandlerFailure() public {
         // First create an ethscription
         bytes32 txHash = keccak256("test_tx_3");
         string memory dataUri = "data:,Test transfer";
@@ -159,9 +159,9 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
         uint256 tokenId = ethscriptions.createEthscription(params);
 
-        // Now configure both TokenManager and Prover to fail
-        FailingTokenManager(Predeploys.TOKEN_MANAGER).setShouldFail(true);
-        FailingTokenManager(Predeploys.TOKEN_MANAGER).setFailMessage("Transfer handling failed");
+        // Now configure both FixedFungibleProtocolHandler and Prover to fail
+        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(true);
+        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setFailMessage("Transfer handling failed");
         FailingProver(Predeploys.ETHSCRIPTIONS_PROVER).setShouldFail(true);
 
         // Transfer should succeed despite failures
@@ -174,7 +174,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
     function testBothFailuresOnCreate() public {
         // Configure both to fail
-        FailingTokenManager(Predeploys.TOKEN_MANAGER).setShouldFail(true);
+        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(true);
         FailingProver(Predeploys.ETHSCRIPTIONS_PROVER).setShouldFail(true);
 
         bytes32 txHash = keccak256("test_tx_4");
@@ -204,7 +204,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
     function testSuccessfulOperationNoFailureEvents() public {
         // Configure both to succeed
-        FailingTokenManager(Predeploys.TOKEN_MANAGER).setShouldFail(false);
+        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(false);
         FailingProver(Predeploys.ETHSCRIPTIONS_PROVER).setShouldFail(false);
 
         bytes32 txHash = keccak256("test_tx_5");

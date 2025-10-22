@@ -1,7 +1,7 @@
 # Unified protocol extractor that delegates to appropriate extractors
 class ProtocolExtractor
   # Default return values to check if extraction succeeded
-  TOKEN_DEFAULT_PARAMS = TokenParamsExtractor::DEFAULT_PARAMS
+  TOKEN_DEFAULT_PARAMS = FixedFungibleTokenParamsExtractor::DEFAULT_PARAMS
   COLLECTIONS_DEFAULT_PARAMS = CollectionsParamsExtractor::DEFAULT_PARAMS
   GENERIC_DEFAULT_PARAMS = GenericProtocolExtractor::DEFAULT_PARAMS
 
@@ -45,15 +45,15 @@ class ProtocolExtractor
   private
 
   def self.try_token_extractor(content_uri)
-    # TokenParamsExtractor uses strict regex and returns DEFAULT_PARAMS if no match
+    # FixedFungibleTokenParamsExtractor uses strict regex and returns DEFAULT_PARAMS if no match
     # This enforces non-ESIP6 and exact JSON formatting implicitly.
-    params = TokenParamsExtractor.extract(content_uri)
+    params = FixedFungibleTokenParamsExtractor.extract(content_uri)
 
     # Check if extraction succeeded (returns non-default params)
     if params != TOKEN_DEFAULT_PARAMS
       {
-        type: :token,
-        protocol: 'erc-20',
+        type: :fixed_fungible,
+        protocol: 'fixed-fungible',
         operation: params[0], # 'deploy' or 'mint'
         params: params,
         encoded_params: encode_token_params(params)
@@ -135,8 +135,8 @@ class ProtocolExtractor
     if result.nil?
       # No protocol detected - return empty protocol params
       [''.b, ''.b, ''.b]
-    elsif result[:type] == :token
-      # Token protocol - return in new format
+    elsif result[:type] == :fixed_fungible
+      # Fixed-fungible protocol - return in ABI-ready format
       protocol = result[:protocol].b
       operation = result[:operation]
       # For tokens, encode the params properly
@@ -158,7 +158,7 @@ class ProtocolExtractor
 
     # Encode based on operation type (operation is passed separately now)
     # Use tuple encoding for struct compatibility with contracts
-    # IMPORTANT: Field order must match TokenManager's struct definitions!
+    # IMPORTANT: Field order must match FixedFungibleProtocolHandler's struct definitions!
     if op == 'deploy'.b
       # DeployOperation struct: tick, maxSupply, mintAmount
       # Our params: tick, max (val1), lim (val2)

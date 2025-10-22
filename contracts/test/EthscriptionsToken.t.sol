@@ -5,6 +5,7 @@ import "./TestSetup.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20CappedUpgradeable.sol";
 
 contract EthscriptionsTokenTest is TestSetup {
+    string constant CANONICAL_PROTOCOL = "fixed-fungible";
     address alice = address(0x1);
     address bob = address(0x2);
     address charlie = address(0x3);
@@ -67,7 +68,7 @@ contract EthscriptionsTokenTest is TestSetup {
         string memory deployContent = 'data:,{"p":"erc-20","op":"deploy","tick":"TEST","max":"1000000","lim":"1000"}';
 
         // For deploy operation, encode the deploy params
-        TokenManager.DeployOperation memory deployOp = TokenManager.DeployOperation({
+        FixedFungibleProtocolHandler.DeployOperation memory deployOp = FixedFungibleProtocolHandler.DeployOperation({
             tick: "TEST",
             maxSupply: 1000000,
             mintAmount: 1000
@@ -77,7 +78,7 @@ contract EthscriptionsTokenTest is TestSetup {
             DEPLOY_TX_HASH,
             alice,
             deployContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "deploy",
             abi.encode(deployOp)
         );
@@ -85,7 +86,7 @@ contract EthscriptionsTokenTest is TestSetup {
         ethscriptions.createEthscription(params);
         
         // Verify token was deployed
-        TokenManager.TokenInfo memory tokenInfo = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        FixedFungibleProtocolHandler.TokenInfo memory tokenInfo = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
             
         assertEq(tokenInfo.tick, "TEST");
         assertEq(tokenInfo.maxSupply, 1000000);
@@ -108,7 +109,7 @@ contract EthscriptionsTokenTest is TestSetup {
         string memory mintContent = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"1","amt":"1000"}';
 
         // For mint operation, encode the mint params
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 1,
             amount: 1000
@@ -118,7 +119,7 @@ contract EthscriptionsTokenTest is TestSetup {
             MINT_TX_HASH_1,
             bob,
             mintContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp)
         );
@@ -130,12 +131,12 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(mintEthscription.ethscriptionNumber), bob);
         
         // Verify Bob has the tokens (1000 * 10^18 with 18 decimals)
-        address tokenAddress = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddress);
+        address tokenAddress = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddress);
         assertEq(token.balanceOf(bob), 1000 ether);  // 1000 * 10^18
         
         // Verify total minted increased
-        TokenManager.TokenInfo memory info = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        FixedFungibleProtocolHandler.TokenInfo memory info = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
         assertEq(info.totalMinted, 1000);
     }
     
@@ -143,8 +144,8 @@ contract EthscriptionsTokenTest is TestSetup {
         // Setup: Deploy and mint
         testTokenMint();
         
-        address tokenAddress = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddress);
+        address tokenAddress = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddress);
         
         // Bob transfers the NFT to Charlie
         vm.prank(bob);
@@ -163,13 +164,13 @@ contract EthscriptionsTokenTest is TestSetup {
         // Deploy the token
         testTokenDeploy();
         
-        address tokenAddress = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddress);
+        address tokenAddress = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddress);
         
         // Bob mints tokens
         vm.prank(bob);
         string memory mintContent1 = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"1","amt":"1000"}';
-        TokenManager.MintOperation memory mintOp1 = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp1 = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 1,
             amount: 1000
@@ -178,7 +179,7 @@ contract EthscriptionsTokenTest is TestSetup {
             MINT_TX_HASH_1,
             bob,
             mintContent1,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp1)
         ));
@@ -186,7 +187,7 @@ contract EthscriptionsTokenTest is TestSetup {
         // Charlie mints tokens
         vm.prank(charlie);
         string memory mintContent2 = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"2","amt":"1000"}';
-        TokenManager.MintOperation memory mintOp2 = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp2 = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 2,
             amount: 1000
@@ -195,7 +196,7 @@ contract EthscriptionsTokenTest is TestSetup {
             MINT_TX_HASH_2,
             charlie,
             mintContent2,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp2)
         ));
@@ -205,7 +206,7 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(token.balanceOf(charlie), 1000 ether);
         
         // Verify total minted
-        TokenManager.TokenInfo memory info = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        FixedFungibleProtocolHandler.TokenInfo memory info = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
         assertEq(info.totalMinted, 2000);
     }
     
@@ -216,7 +217,7 @@ contract EthscriptionsTokenTest is TestSetup {
         bytes32 smallDeployHash = bytes32(uint256(0xDEAD));
         string memory deployContent = 'data:,{"p":"erc-20","op":"deploy","tick":"SMALL","max":"2000","lim":"1000"}';
         
-        TokenManager.DeployOperation memory smallDeployOp = TokenManager.DeployOperation({
+        FixedFungibleProtocolHandler.DeployOperation memory smallDeployOp = FixedFungibleProtocolHandler.DeployOperation({
             tick: "SMALL",
             maxSupply: 2000,
             mintAmount: 1000
@@ -226,14 +227,14 @@ contract EthscriptionsTokenTest is TestSetup {
             smallDeployHash,
             alice,
             deployContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "deploy",
             abi.encode(smallDeployOp)
         ));
         
         // Mint up to max supply
         vm.prank(bob);
-        TokenManager.MintOperation memory mintOp1Small = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp1Small = FixedFungibleProtocolHandler.MintOperation({
             tick: "SMALL",
             id: 1,
             amount: 1000
@@ -242,13 +243,13 @@ contract EthscriptionsTokenTest is TestSetup {
             bytes32(uint256(0xBEEF1)),
             bob,
             'data:,{"p":"erc-20","op":"mint","tick":"SMALL","id":"1","amt":"1000"}',
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp1Small)
         ));
         
         vm.prank(charlie);
-        TokenManager.MintOperation memory mintOp2Small = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp2Small = FixedFungibleProtocolHandler.MintOperation({
             tick: "SMALL",
             id: 2,
             amount: 1000
@@ -257,14 +258,14 @@ contract EthscriptionsTokenTest is TestSetup {
             bytes32(uint256(0xBEEF2)),
             charlie,
             'data:,{"p":"erc-20","op":"mint","tick":"SMALL","id":"2","amt":"1000"}',
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp2Small)
         ));
         
         // Try to mint beyond max supply - should fail silently with event
         bytes32 exceedTxHash = bytes32(uint256(0xBEEF3));
-        TokenManager.MintOperation memory exceedMintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory exceedMintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "SMALL",
             id: 3,
             amount: 1000
@@ -273,7 +274,7 @@ contract EthscriptionsTokenTest is TestSetup {
             exceedTxHash,
             alice,
             'data:,{"p":"erc-20","op":"mint","tick":"SMALL","id":"3","amt":"1000"}',
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(exceedMintOp)
         );
@@ -287,8 +288,8 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), alice);
 
         // Verify supply didn't increase
-        address tokenAddress = tokenManager.getTokenAddressByTick("SMALL");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddress);
+        address tokenAddress = fixedFungibleHandler.getTokenAddressByTick("SMALL");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddress);
         assertEq(token.totalSupply(), 2000 ether); // Should still be at max
     }
     
@@ -296,24 +297,24 @@ contract EthscriptionsTokenTest is TestSetup {
         // Setup
         testTokenMint();
         
-        address tokenAddress = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddress);
+        address tokenAddress = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddress);
         
         // Bob tries to transfer tokens directly (not via NFT) - should revert
         vm.prank(bob);
-        vm.expectRevert(EthscriptionsERC20.TransfersOnlyViaEthscriptions.selector);
+        vm.expectRevert(FixedFungibleERC20.TransfersOnlyViaEthscriptions.selector);
         token.transfer(charlie, 500);
     }
     
     function testTokenAddressPredictability() public {
         // Predict the token address before deployment
-        address predictedAddress = tokenManager.predictTokenAddressByTick("TEST");
+        address predictedAddress = fixedFungibleHandler.predictTokenAddressByTick("TEST");
         
         // Deploy the token
         testTokenDeploy();
         
         // Verify the actual address matches prediction
-        address actualAddress = tokenManager.getTokenAddressByTick("TEST");
+        address actualAddress = fixedFungibleHandler.getTokenAddressByTick("TEST");
         assertEq(actualAddress, predictedAddress);
     }
     
@@ -325,7 +326,7 @@ contract EthscriptionsTokenTest is TestSetup {
         string memory wrongAmountContent = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"1","amt":"500"}';
 
         bytes32 wrongTxHash = bytes32(uint256(0xBAD));
-        TokenManager.MintOperation memory wrongMintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory wrongMintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 1,
             amount: 500  // Wrong - should be 1000 to match lim
@@ -334,7 +335,7 @@ contract EthscriptionsTokenTest is TestSetup {
             wrongTxHash,
             bob,
             wrongAmountContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(wrongMintOp)
         );
@@ -348,8 +349,8 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), bob);
 
         // Verify no tokens were minted
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
         assertEq(token.balanceOf(bob), 0); // Bob should have no tokens
     }
     
@@ -362,7 +363,7 @@ contract EthscriptionsTokenTest is TestSetup {
         string memory deployContent = 'data:,{"p":"erc-20","op":"deploy","tick":"TEST","max":"2000000","lim":"2000"}';
 
         bytes32 duplicateTxHash = bytes32(uint256(0xABCD));
-        TokenManager.DeployOperation memory duplicateDeployOp = TokenManager.DeployOperation({
+        FixedFungibleProtocolHandler.DeployOperation memory duplicateDeployOp = FixedFungibleProtocolHandler.DeployOperation({
             tick: "TEST",
             maxSupply: 2000000,  // Different parameters but same tick
             mintAmount: 2000
@@ -372,7 +373,7 @@ contract EthscriptionsTokenTest is TestSetup {
             duplicateTxHash,
             alice,
             deployContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "deploy",
             abi.encode(duplicateDeployOp)
         );
@@ -386,9 +387,9 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), alice);
 
         // Verify the original token is still the only one
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
-        assertEq(token.name(), "erc-20 TEST");  // Token name format is "protocol tick"
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
+        assertEq(token.name(), "Fixed-Fungible TEST");  // Token name format is "protocol tick"
         assertEq(token.maxSupply(), 1000000 ether); // Original cap (maxSupply), not the duplicate's
     }
 
@@ -400,7 +401,7 @@ contract EthscriptionsTokenTest is TestSetup {
         vm.prank(bob);
         string memory mintContent = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"0","amt":"1000"}';
 
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 0, // Invalid ID - should be >= 1
             amount: 1000
@@ -411,7 +412,7 @@ contract EthscriptionsTokenTest is TestSetup {
             invalidMintHash,
             bob,
             mintContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp)
         );
@@ -423,12 +424,12 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), bob);
 
         // Verify no tokens were minted due to invalid ID
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
         assertEq(token.balanceOf(bob), 0); // Bob should have no tokens
 
         // Verify total minted didn't increase
-        TokenManager.TokenInfo memory info = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        FixedFungibleProtocolHandler.TokenInfo memory info = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
         assertEq(info.totalMinted, 0);
     }
 
@@ -440,7 +441,7 @@ contract EthscriptionsTokenTest is TestSetup {
         vm.prank(bob);
         string memory mintContent = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"1001","amt":"1000"}';
 
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 1001, // Invalid ID - maxId is 1000
             amount: 1000
@@ -451,7 +452,7 @@ contract EthscriptionsTokenTest is TestSetup {
             invalidMintHash,
             bob,
             mintContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp)
         );
@@ -463,12 +464,12 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), bob);
 
         // Verify no tokens were minted due to invalid ID
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
         assertEq(token.balanceOf(bob), 0); // Bob should have no tokens
 
         // Verify total minted didn't increase
-        TokenManager.TokenInfo memory info = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        FixedFungibleProtocolHandler.TokenInfo memory info = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
         assertEq(info.totalMinted, 0);
     }
 
@@ -480,7 +481,7 @@ contract EthscriptionsTokenTest is TestSetup {
         vm.prank(bob);
         string memory mintContent = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"1000","amt":"1000"}';
 
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 1000, // Maximum valid ID
             amount: 1000
@@ -491,7 +492,7 @@ contract EthscriptionsTokenTest is TestSetup {
             validMintHash,
             bob,
             mintContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp)
         );
@@ -502,12 +503,12 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), bob);
 
         // Verify Bob has the tokens (1000 * 10^18 with 18 decimals)
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
         assertEq(token.balanceOf(bob), 1000 ether); // Should have tokens
 
         // Verify total minted increased
-        TokenManager.TokenInfo memory info = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        FixedFungibleProtocolHandler.TokenInfo memory info = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
         assertEq(info.totalMinted, 1000);
     }
 
@@ -519,7 +520,7 @@ contract EthscriptionsTokenTest is TestSetup {
         bytes32 nullMintTx = bytes32(uint256(0xBADD0));
         string memory mintContent = 'data:,{"p":"erc-20","op":"mint","tick":"TEST","id":"1","amt":"1000"}';
 
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "TEST",
             id: 1,
             amount: 1000
@@ -530,7 +531,7 @@ contract EthscriptionsTokenTest is TestSetup {
             nullMintTx,
             address(0),
             mintContent,
-            "erc-20",
+            CANONICAL_PROTOCOL,
             "mint",
             abi.encode(mintOp)
         );
@@ -542,14 +543,14 @@ contract EthscriptionsTokenTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), address(0));
 
         // ERC20 should be minted and credited to the null address
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
         assertEq(token.totalSupply(), 1000 ether);
         assertEq(token.balanceOf(address(0)), 1000 ether);
 
-        // TokenManager should record a token item and increase total minted
-        assertTrue(tokenManager.isTokenItem(nullMintTx));
-        TokenManager.TokenInfo memory info = tokenManager.getTokenInfo(DEPLOY_TX_HASH);
+        // FixedFungibleProtocolHandler should record a token item and increase total minted
+        assertTrue(fixedFungibleHandler.isTokenItem(nullMintTx));
+        FixedFungibleProtocolHandler.TokenInfo memory info = fixedFungibleHandler.getTokenInfo(DEPLOY_TX_HASH);
         assertEq(info.totalMinted, 1000);
     }
 
@@ -557,8 +558,8 @@ contract EthscriptionsTokenTest is TestSetup {
         // Setup: deploy and mint a token item to Bob
         testTokenMint();
 
-        address tokenAddr = tokenManager.getTokenAddressByTick("TEST");
-        EthscriptionsERC20 token = EthscriptionsERC20(tokenAddr);
+        address tokenAddr = fixedFungibleHandler.getTokenAddressByTick("TEST");
+        FixedFungibleERC20 token = FixedFungibleERC20(tokenAddr);
 
         // Sanity: Bob has the ERC20 minted via the token item
         assertEq(token.balanceOf(bob), 1000 ether);

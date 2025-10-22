@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
-import "../src/CollectionsManager.sol";
+import "../src/CollectionsProtocolHandler.sol";
 import "../src/Ethscriptions.sol";
 import "../src/libraries/Predeploys.sol";
 import "./TestSetup.sol";
@@ -12,7 +12,7 @@ contract CollectionsProtocolTest is TestSetup {
     
     function test_CreateCollection() public {
         // Encode collection metadata as ABI tuple
-        CollectionsManager.CollectionMetadata memory metadata = CollectionsManager.CollectionMetadata({
+        CollectionsProtocolHandler.CollectionMetadata memory metadata = CollectionsProtocolHandler.CollectionMetadata({
             name: "Test Collection",
             symbol: "TEST",
             totalSupply: 100,
@@ -31,20 +31,20 @@ contract CollectionsProtocolTest is TestSetup {
         bytes32 txHash = keccak256("create_collection_tx");
 
         vm.prank(address(ethscriptions));
-        collectionsManager.op_create_collection(txHash, encodedMetadata);
+        collectionsHandler.op_create_collection(txHash, encodedMetadata);
 
         // Verify collection was created
         bytes32 collectionId = txHash;
 
         // Use the getter functions instead of direct mapping access
-        CollectionsManager.CollectionState memory state = collectionsManager.getCollectionState(collectionId);
+        CollectionsProtocolHandler.CollectionState memory state = collectionsHandler.getCollectionState(collectionId);
         assertNotEq(state.collectionContract, address(0), "Collection contract should be deployed");
         assertEq(state.createEthscriptionId, txHash, "Create ethscription ID should match");
         assertEq(state.currentSize, 0, "Initial size should be 0");
         assertEq(state.locked, false, "Should not be locked");
 
         // Verify metadata
-        CollectionsManager.CollectionMetadata memory storedMetadata = collectionsManager.getCollectionMetadata(collectionId);
+        CollectionsProtocolHandler.CollectionMetadata memory storedMetadata = collectionsHandler.getCollectionMetadata(collectionId);
         assertEq(storedMetadata.name, "Test Collection", "Name should match");
         assertEq(storedMetadata.symbol, "TEST", "Symbol should match");
         assertEq(storedMetadata.totalSupply, 100, "Total supply should match");
@@ -58,7 +58,7 @@ contract CollectionsProtocolTest is TestSetup {
         string memory json = '{"p":"collections","op":"create_collection","name":"Test NFTs","symbol":"TEST","totalSupply":"100","description":"","logoImageUri":"","bannerImageUri":"","backgroundColor":"","websiteLink":"","twitterLink":"","discordLink":""}';
 
         // Encode the metadata as the protocol handler expects
-        CollectionsManager.CollectionMetadata memory metadata = CollectionsManager.CollectionMetadata({
+        CollectionsProtocolHandler.CollectionMetadata memory metadata = CollectionsProtocolHandler.CollectionMetadata({
             name: "Test NFTs",
             symbol: "TEST",
             totalSupply: 100,
@@ -97,7 +97,7 @@ contract CollectionsProtocolTest is TestSetup {
         bytes32 collectionId = txHash;
 
         // Read back the state
-        CollectionsManager.CollectionState memory state = collectionsManager.getCollectionState(collectionId);
+        CollectionsProtocolHandler.CollectionState memory state = collectionsHandler.getCollectionState(collectionId);
 
         console.log("Collection exists:", state.collectionContract != address(0));
         console.log("Collection contract:", state.collectionContract);
@@ -110,7 +110,7 @@ contract CollectionsProtocolTest is TestSetup {
         assertEq(state.locked, false);
 
         // Read metadata
-        CollectionsManager.CollectionMetadata memory storedMetadata = collectionsManager.getCollectionMetadata(collectionId);
+        CollectionsProtocolHandler.CollectionMetadata memory storedMetadata = collectionsHandler.getCollectionMetadata(collectionId);
         assertEq(storedMetadata.name, "Test NFTs");
         assertEq(storedMetadata.symbol, "TEST");
         assertEq(storedMetadata.totalSupply, 100);
@@ -118,7 +118,7 @@ contract CollectionsProtocolTest is TestSetup {
 
     function test_ReadCollectionStateViaEthCall() public {
         // Create a collection first
-        CollectionsManager.CollectionMetadata memory metadata = CollectionsManager.CollectionMetadata({
+        CollectionsProtocolHandler.CollectionMetadata memory metadata = CollectionsProtocolHandler.CollectionMetadata({
             name: "Call Test",
             symbol: "CALL",
             totalSupply: 50,
@@ -134,14 +134,14 @@ contract CollectionsProtocolTest is TestSetup {
         bytes32 txHash = keccak256("call_test_tx");
 
         vm.prank(address(ethscriptions));
-        collectionsManager.op_create_collection(txHash, abi.encode(metadata));
+        collectionsHandler.op_create_collection(txHash, abi.encode(metadata));
 
         // Now simulate an eth_call to read the state
         bytes32 collectionId = txHash;
 
         // Encode the function call: getCollectionState(bytes32)
         bytes memory callData = abi.encodeWithSelector(
-            collectionsManager.getCollectionState.selector,
+            collectionsHandler.getCollectionState.selector,
             collectionId
         );
 
@@ -149,14 +149,14 @@ contract CollectionsProtocolTest is TestSetup {
         console.logBytes(callData);
 
         // Make the call
-        (bool success, bytes memory result) = address(collectionsManager).staticcall(callData);
+        (bool success, bytes memory result) = address(collectionsHandler).staticcall(callData);
         assertTrue(success, "Static call should succeed");
 
         console.log("Result:");
         console.logBytes(result);
 
         // Decode the result
-        CollectionsManager.CollectionState memory state = abi.decode(result, (CollectionsManager.CollectionState));
+        CollectionsProtocolHandler.CollectionState memory state = abi.decode(result, (CollectionsProtocolHandler.CollectionState));
 
         assertTrue(state.collectionContract != address(0), "Should have collection contract");
         assertEq(state.createEthscriptionId, txHash);

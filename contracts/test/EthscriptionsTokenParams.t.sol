@@ -5,6 +5,7 @@ import "./TestSetup.sol";
 import "forge-std/console.sol";
 
 contract EthscriptionsTokenParamsTest is TestSetup {
+    string constant CANONICAL_PROTOCOL = "fixed-fungible";
 
     function testCreateWithTokenDeployParams() public {
         // Create a token deploy ethscription
@@ -12,7 +13,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         string memory dataUri = string.concat("data:,", tokenJson);
         bytes32 contentUriHash = sha256(bytes(dataUri));
 
-        TokenManager.DeployOperation memory deployOp = TokenManager.DeployOperation({
+        FixedFungibleProtocolHandler.DeployOperation memory deployOp = FixedFungibleProtocolHandler.DeployOperation({
             tick: "eths",
             maxSupply: 21000000,
             mintAmount: 1000
@@ -26,7 +27,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "erc-20",
+                protocolName: CANONICAL_PROTOCOL,
                 operation: "deploy",
                 data: abi.encode(deployOp)
             })
@@ -50,7 +51,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         string memory dataUri = string.concat("data:,", tokenJson);
         bytes32 contentUriHash = sha256(bytes(dataUri));
 
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "eths",
             id: 1,
             amount: 1000
@@ -64,7 +65,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "erc-20",
+                protocolName: CANONICAL_PROTOCOL,
                 operation: "mint",
                 data: abi.encode(mintOp)
             })
@@ -104,13 +105,13 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         assertEq(ethscriptions.totalSupply(), 12, "Should have created new ethscription");
     }
 
-    function testTokenManagerIntegration() public {
+    function testFixedFungibleProtocolHandlerIntegration() public {
         // First create a deploy operation
         string memory deployJson = '{"p":"erc-20","op":"deploy","tick":"test","max":"1000000","lim":"100"}';
         string memory deployUri = string.concat("data:,", deployJson);
 
 
-        TokenManager.DeployOperation memory deployOp = TokenManager.DeployOperation({
+        FixedFungibleProtocolHandler.DeployOperation memory deployOp = FixedFungibleProtocolHandler.DeployOperation({
             tick: "test",
             maxSupply: 1000000,
             mintAmount: 100
@@ -124,7 +125,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             mimetype: "application/json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "erc-20",
+                protocolName: CANONICAL_PROTOCOL,
                 operation: "deploy",
                 data: abi.encode(deployOp)
             })
@@ -136,7 +137,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         string memory mintJson = '{"p":"erc-20","op":"mint","tick":"test","id":"1","amt":"100"}';
         string memory mintUri = string.concat("data:,", mintJson);
 
-        TokenManager.MintOperation memory mintOp = TokenManager.MintOperation({
+        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
             tick: "test",
             id: 1,
             amount: 100
@@ -150,7 +151,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
             mimetype: "application/json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "erc-20",
+                protocolName: CANONICAL_PROTOCOL,
                 operation: "mint",
                 data: abi.encode(mintOp)
             })

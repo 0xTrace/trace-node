@@ -8,12 +8,12 @@ import "./ERC721EthscriptionsUpgradeable.sol";
 import "./Ethscriptions.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {Base64} from "solady/utils/Base64.sol";
-import "./CollectionsManager.sol";
+import "./CollectionsProtocolHandler.sol";
 
-/// @title EthscriptionERC721
+/// @title CollectionsERC721
 /// @notice ERC-721 contract for an Ethscription collection
 /// @dev Maintains internal state but overrides ownerOf to delegate to Ethscriptions contract
-contract EthscriptionERC721 is ERC721EthscriptionsUpgradeable {
+contract CollectionsERC721 is ERC721EthscriptionsUpgradeable {
     using LibString for *;
 
     /// @notice The main Ethscriptions contract
@@ -125,8 +125,8 @@ contract EthscriptionERC721 is ERC721EthscriptionsUpgradeable {
         }
 
         // Get ethscription ID from manager
-        CollectionsManager manager = CollectionsManager(factory);
-        CollectionsManager.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
+        CollectionsProtocolHandler manager = CollectionsProtocolHandler(factory);
+        CollectionsProtocolHandler.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
 
         if (item.ethscriptionId == bytes32(0)) {
             revert("Token not in collection");
@@ -142,9 +142,9 @@ contract EthscriptionERC721 is ERC721EthscriptionsUpgradeable {
             revert("Token does not exist");
         }
 
-        // Get collection metadata and item data from CollectionsManager
-        CollectionsManager manager = CollectionsManager(factory);
-        CollectionsManager.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
+        // Get collection metadata and item data from CollectionsProtocolHandler
+        CollectionsProtocolHandler manager = CollectionsProtocolHandler(factory);
+        CollectionsProtocolHandler.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
 
         if (item.ethscriptionId == bytes32(0)) {
             revert("Token not in collection");

@@ -3,10 +3,10 @@ pragma solidity ^0.8.24;
 
 import "forge-std/Test.sol";
 import "../src/Ethscriptions.sol";
-import "../src/TokenManager.sol";
-import "../src/CollectionsManager.sol";
+import "../src/FixedFungibleProtocolHandler.sol";
+import "../src/CollectionsProtocolHandler.sol";
 import "../src/EthscriptionsProver.sol";
-import "../src/EthscriptionsERC20.sol";
+import "../src/FixedFungibleERC20.sol";
 import "../src/L2/L2ToL1MessagePasser.sol";
 import "../src/L2/L1Block.sol";
 import {Base64} from "solady/utils/Base64.sol";
@@ -17,25 +17,25 @@ import "../script/L2Genesis.s.sol";
 /// @notice Base test contract that pre-deploys all system contracts at their known addresses
 abstract contract TestSetup is Test {
     Ethscriptions public ethscriptions;
-    TokenManager public tokenManager;
-    CollectionsManager public collectionsManager;
+    FixedFungibleProtocolHandler public fixedFungibleHandler;
+    CollectionsProtocolHandler public collectionsHandler;
     EthscriptionsProver public prover;
     L1Block public l1Block;
     
     function setUp() public virtual {
         // Deploy all system contracts to temporary addresses first
         // Ethscriptions tempEthscriptions = new Ethscriptions();
-        // TokenManager tempTokenManager = new TokenManager();
+        // FixedFungibleProtocolHandler tempFixedFungibleProtocolHandler = new FixedFungibleProtocolHandler();
         // EthscriptionsProver tempProver = new EthscriptionsProver();
-        // EthscriptionsERC20 tempERC20Template = new EthscriptionsERC20();
+        // FixedFungibleERC20 tempERC20Template = new FixedFungibleERC20();
         // L2ToL1MessagePasser tempMessagePasser = new L2ToL1MessagePasser();
         // L1Block tempL1Block = new L1Block();
         
         // // Etch them at their known addresses
         // vm.etch(Predeploys.ETHSCRIPTIONS, address(tempEthscriptions).code);
-        // vm.etch(Predeploys.TOKEN_MANAGER, address(tempTokenManager).code);
+        // vm.etch(Predeploys.FIXED_FUNGIBLE_HANDLER, address(tempFixedFungibleProtocolHandler).code);
         // vm.etch(Predeploys.ETHSCRIPTIONS_PROVER, address(tempProver).code);
-        // vm.etch(Predeploys.ERC20_TEMPLATE, address(tempERC20Template).code);
+        // vm.etch(Predeploys.FIXED_FUNGIBLE_TEMPLATE_IMPLEMENTATION, address(tempERC20Template).code);
         // vm.etch(Predeploys.L2_TO_L1_MESSAGE_PASSER, address(tempMessagePasser).code);
         // vm.etch(Predeploys.L1_BLOCK_ATTRIBUTES, address(tempL1Block).code);
         
@@ -47,8 +47,8 @@ abstract contract TestSetup is Test {
         ethscriptions = Ethscriptions(Predeploys.ETHSCRIPTIONS);
         
         // Store contract references for tests
-        tokenManager = TokenManager(Predeploys.TOKEN_MANAGER);
-        collectionsManager = CollectionsManager(Predeploys.COLLECTIONS_MANAGER);
+        fixedFungibleHandler = FixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER);
+        collectionsHandler = CollectionsProtocolHandler(Predeploys.COLLECTIONS_PROTOCOL_HANDLER);
         prover = EthscriptionsProver(Predeploys.ETHSCRIPTIONS_PROVER);
         l1Block = L1Block(Predeploys.L1_BLOCK_ATTRIBUTES);
 

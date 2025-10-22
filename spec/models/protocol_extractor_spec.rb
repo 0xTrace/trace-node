@@ -2,29 +2,29 @@ require 'rails_helper'
 
 RSpec.describe ProtocolExtractor do
   describe '.extract' do
-    context 'token protocol (erc-20)' do
-      it 'delegates to TokenParamsExtractor for valid deploy' do
+    context 'fixed-fungible protocol (erc-20 inscriptions)' do
+      it 'delegates to FixedFungibleTokenParamsExtractor for valid deploy' do
         content_uri = 'data:,{"p":"erc-20","op":"deploy","tick":"punk","max":"21000000","lim":"1000"}'
 
         result = ProtocolExtractor.extract(content_uri)
 
         expect(result).not_to be_nil
-        expect(result[:type]).to eq(:token)
-        expect(result[:protocol]).to eq('erc-20')
+        expect(result[:type]).to eq(:fixed_fungible)
+        expect(result[:protocol]).to eq('fixed-fungible')
         expect(result[:operation]).to eq('deploy'.b)
-        expect(result[:params]).to eq(['deploy'.b, 'erc-20'.b, 'punk'.b, 21000000, 1000, 0])
+        expect(result[:params]).to eq(['deploy'.b, 'fixed-fungible'.b, 'punk'.b, 21000000, 1000, 0])
       end
 
-      it 'delegates to TokenParamsExtractor for valid mint' do
+      it 'delegates to FixedFungibleTokenParamsExtractor for valid mint' do
         content_uri = 'data:,{"p":"erc-20","op":"mint","tick":"punk","id":"1","amt":"100"}'
 
         result = ProtocolExtractor.extract(content_uri)
 
         expect(result).not_to be_nil
-        expect(result[:type]).to eq(:token)
-        expect(result[:protocol]).to eq('erc-20')
+        expect(result[:type]).to eq(:fixed_fungible)
+        expect(result[:protocol]).to eq('fixed-fungible')
         expect(result[:operation]).to eq('mint'.b)
-        expect(result[:params]).to eq(['mint'.b, 'erc-20'.b, 'punk'.b, 1, 0, 100])
+        expect(result[:params]).to eq(['mint'.b, 'fixed-fungible'.b, 'punk'.b, 1, 0, 100])
       end
 
       it 'falls back to generic extractor for malformed token protocol' do
@@ -133,7 +133,7 @@ RSpec.describe ProtocolExtractor do
 
         result = ProtocolExtractor.for_calldata(content_uri)
 
-        expect(result[0]).to eq('erc-20'.b)  # protocol
+        expect(result[0]).to eq('fixed-fungible'.b)  # protocol
         expect(result[1]).to eq('deploy'.b)   # operation
         expect(result[2]).not_to be_empty     # encoded data
 
@@ -151,7 +151,7 @@ RSpec.describe ProtocolExtractor do
 
         result = ProtocolExtractor.for_calldata(content_uri)
 
-        expect(result[0]).to eq('erc-20'.b)  # protocol
+        expect(result[0]).to eq('fixed-fungible'.b)  # protocol
         expect(result[1]).to eq('mint'.b)     # operation
         expect(result[2]).not_to be_empty     # encoded data
 
@@ -208,8 +208,8 @@ RSpec.describe ProtocolExtractor do
 
         result = ProtocolExtractor.extract(content_uri)
 
-        expect(result[:type]).to eq(:token)
-        expect(result[:protocol]).to eq('erc-20')
+        expect(result[:type]).to eq(:fixed_fungible)
+        expect(result[:protocol]).to eq('fixed-fungible')
       end
 
       it 'falls back to generic for erc-20 with non-standard operations' do
