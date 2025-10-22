@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import "./CollectionsERC721.sol";
+import "./libraries/Proxy.sol";
 import "./Ethscriptions.sol";
 import "./libraries/Predeploys.sol";
 import "./interfaces/IProtocolHandler.sol";
 
 contract CollectionsProtocolHandler is IProtocolHandler {
-    using Clones for address;
     using LibString for string;
 
     // Standard NFT attribute structure
@@ -96,7 +96,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         // Note: Similar to ItemData but without ethscriptionId (can't change)
     }
 
-    address public constant collectionsTemplate = Predeploys.COLLECTIONS_TEMPLATE_IMPLEMENTATION;
+    address public constant collectionsImplementation = Predeploys.COLLECTIONS_TEMPLATE_IMPLEMENTATION;
     address public constant ethscriptions = Predeploys.ETHSCRIPTIONS;
 
     // Track deployed collections by ID
@@ -156,19 +156,23 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         // Get totalSupply from metadata
         uint256 totalSupply = metadata.totalSupply;
 
-        // Deploy ERC721 clone with CREATE2 using collectionId as salt for deterministic address
-        address collectionContract = collectionsTemplate.cloneDeterministic(collectionId);
+        // Deploy ERC721 proxy with CREATE2 using collectionId as salt for deterministic address
+        Proxy collectionProxy = new Proxy{salt: collectionId}(address(this));
 
-        // Initialize the clone with basic info
-        CollectionsERC721(collectionContract).initialize(
+        // Initialize implementation via proxy
+        bytes memory initCalldata = abi.encodeWithSelector(
+            CollectionsERC721.initialize.selector,
             metadata.name,
             metadata.symbol,
             collectionId
         );
+        collectionProxy.upgradeToAndCall(collectionsImplementation, initCalldata);
+        // Hand over admin to global ProxyAdmin
+        collectionProxy.changeAdmin(Predeploys.PROXY_ADMIN);
 
         // Store collection state
         collectionState[collectionId] = CollectionState({
-            collectionContract: collectionContract,
+            collectionContract: address(collectionProxy),
             createEthscriptionId: txHash,
             currentSize: 0,
             locked: false
@@ -179,7 +183,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
 
         collectionIds.push(collectionId);
 
-        emit CollectionCreated(collectionId, collectionContract, metadata.name, metadata.symbol, totalSupply);
+        emit CollectionCreated(collectionId, address(collectionProxy), metadata.name, metadata.symbol, totalSupply);
         emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
@@ -459,7 +463,8 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         }
 
         // Predict using CREATE2
-        return Clones.predictDeterministicAddress(collectionsTemplate, collectionId, address(this));
+        bytes memory creationCode = abi.encodePacked(type(Proxy).creationCode, abi.encode(address(this)));
+        return Create2.computeAddress(collectionId, keccak256(creationCode), address(this));
     }
 
     function getAllCollections() external view returns (bytes32[] memory) {

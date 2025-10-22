@@ -27,21 +27,21 @@ contract ProxyAdmin is Ownable {
     /// @notice Returns the admin of the given proxy address.
     /// @param _proxy Address of the proxy to get the admin of.
     /// @return Address of the admin of the proxy.
-    function getProxyAdmin(address payable _proxy) external view returns (address) {
+    function getProxyAdmin(address _proxy) external view returns (address) {
         return IStaticERC1967Proxy(_proxy).admin();
     }
 
     /// @notice Updates the admin of the given proxy address.
     /// @param _proxy    Address of the proxy to update.
     /// @param _newAdmin Address of the new proxy admin.
-    function changeProxyAdmin(address payable _proxy, address _newAdmin) external onlyOwner {
+    function changeProxyAdmin(address _proxy, address _newAdmin) external onlyOwner {
         Proxy(_proxy).changeAdmin(_newAdmin);
     }
 
     /// @notice Changes a proxy's implementation contract.
     /// @param _proxy          Address of the proxy to upgrade.
     /// @param _implementation Address of the new implementation address.
-    function upgrade(address payable _proxy, address _implementation) public onlyOwner {
+    function upgrade(address _proxy, address _implementation) public onlyOwner {
         Proxy(_proxy).upgradeTo(_implementation);
     }
 
@@ -51,14 +51,10 @@ contract ProxyAdmin is Ownable {
     /// @param _implementation Address of the new implementation address.
     /// @param _data           Data to trigger the new implementation with.
     function upgradeAndCall(
-        address payable _proxy,
+        address _proxy,
         address _implementation,
         bytes memory _data
-    )
-        external
-        payable
-        onlyOwner
-    {
-        Proxy(_proxy).upgradeToAndCall{ value: msg.value }(_implementation, _data);
+    ) external onlyOwner {
+        Proxy(_proxy).upgradeToAndCall(_implementation, _data);
     }
 }

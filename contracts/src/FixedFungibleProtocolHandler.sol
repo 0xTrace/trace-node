@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import "./FixedFungibleERC20.sol";
+import "./libraries/Proxy.sol";
 import "./Ethscriptions.sol";
 import "./libraries/Predeploys.sol";
 import "./interfaces/IProtocolHandler.sol";
@@ -12,7 +13,6 @@ import "./interfaces/IProtocolHandler.sol";
 /// @notice Implements the fixed-fungible token protocol enforced via Ethscriptions transfers
 /// @dev Deploys and controls FixedFungible ERC-20 clones; callable only by the Ethscriptions contract
 contract FixedFungibleProtocolHandler is IProtocolHandler {
-    using Clones for address;
     using LibString for string;
 
     // =============================================================
@@ -50,8 +50,8 @@ contract FixedFungibleProtocolHandler is IProtocolHandler {
     //                         CONSTANTS
     // =============================================================
 
-    /// @dev Deterministic template contract used for clone deployments
-    address public constant fixedFungibleTemplate = Predeploys.FIXED_FUNGIBLE_TEMPLATE_IMPLEMENTATION;
+    /// @dev Implementation contract used for proxy deployments
+    address public constant fixedFungibleImplementation = Predeploys.FIXED_FUNGIBLE_TEMPLATE_IMPLEMENTATION;
     address public constant ethscriptions = Predeploys.ETHSCRIPTIONS;
     string public constant CANONICAL_PROTOCOL = "fixed-fungible";
     string public constant PRETTY_PROTOCOL = "Fixed-Fungible";
@@ -140,25 +140,29 @@ contract FixedFungibleProtocolHandler is IProtocolHandler {
         if (deployOp.mintAmount == 0) revert InvalidMintAmount();
         if (deployOp.maxSupply % deployOp.mintAmount != 0) revert MaxSupplyNotDivisibleByMintAmount();
 
-        // Deploy ERC20 clone with CREATE2 using tickKey as salt for deterministic address
-        address tokenAddress = fixedFungibleTemplate.cloneDeterministic(tickKey);
+        // Deploy a Proxy via CREATE2 with this handler as temporary admin for initialization
+        Proxy tokenProxy = new Proxy{salt: tickKey}(address(this));
 
-        // Initialize the clone
+        // Build name/symbol and initialization calldata
         string memory name = string.concat(PRETTY_PROTOCOL, " ", deployOp.tick);
         string memory symbol = LibString.upper(deployOp.tick);
-
         // Initialize with max supply in 18 decimals
         // User maxSupply "1000000" means 1000000 * 10^18 smallest units
-        FixedFungibleERC20(tokenAddress).initialize(
+        bytes memory initCalldata = abi.encodeWithSelector(
+            FixedFungibleERC20.initialize.selector,
             name,
             symbol,
             deployOp.maxSupply * 10**18,
             ethscriptionId
         );
+        // Set implementation and run initialize as admin
+        tokenProxy.upgradeToAndCall(fixedFungibleImplementation, initCalldata);
+        // Hand off admin to global ProxyAdmin so upgrades require system governance
+        tokenProxy.changeAdmin(Predeploys.PROXY_ADMIN);
 
         // Store token info
         tokensByTick[tickKey] = TokenInfo({
-            tokenContract: tokenAddress,
+            tokenContract: address(tokenProxy),
             deployEthscriptionId: ethscriptionId,
             tick: deployOp.tick,
             maxSupply: deployOp.maxSupply,
@@ -171,7 +175,7 @@ contract FixedFungibleProtocolHandler is IProtocolHandler {
 
         emit FixedFungibleTokenDeployed(
             ethscriptionId,
-            tokenAddress,
+            address(tokenProxy),
             deployOp.tick,
             deployOp.maxSupply,
             deployOp.mintAmount
@@ -290,8 +294,9 @@ contract FixedFungibleProtocolHandler is IProtocolHandler {
             return tokensByTick[tickKey].tokenContract;
         }
 
-        // Predict using CREATE2
-        return Clones.predictDeterministicAddress(fixedFungibleTemplate, tickKey, address(this));
+        // Predict using CREATE2 for Proxy with constructor arg (admin = address(this))
+        bytes memory creationCode = abi.encodePacked(type(Proxy).creationCode, abi.encode(address(this)));
+        return Create2.computeAddress(tickKey, keccak256(creationCode), address(this));
     }
 
     /// @notice Check if an ethscription is a token item
