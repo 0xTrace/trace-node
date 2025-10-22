@@ -20,14 +20,16 @@ abstract contract ERC721EthscriptionsSequentialEnumerableUpgradeable is ERC721Et
         uint256 _mintCount;
     }
 
+    // keccak256(abi.encode(uint256(keccak256("openzeppelin.storage.ERC721SequentialEnumerableStorageLocation")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant ERC721SequentialEnumerableStorageLocation = 0x154e8d00bf5f00755eebdfa0d432d05cad242742a46a00bbdb15798f33342700;
+
     function _getERC721SequentialEnumerableStorage()
         private
         pure
         returns (ERC721SequentialEnumerableStorage storage $)
     {
-        bytes32 slot = keccak256(abi.encode("ethscriptions.storage.ERC721SequentialEnumerable"));
         assembly {
-            $.slot := slot
+            $.slot := ERC721SequentialEnumerableStorageLocation
         }
     }
 
