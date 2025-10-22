@@ -49,7 +49,7 @@ RSpec.describe ProtocolExtractor do
         # Should be extracted as generic protocol due to extra fields
         expect(result).not_to be_nil
         expect(result[:type]).to eq(:generic)
-        expect(result[:protocol]).to eq('fixed-fungible')
+        expect(result[:protocol]).to eq('erc-20')
       end
     end
 
@@ -133,7 +133,7 @@ RSpec.describe ProtocolExtractor do
 
         result = ProtocolExtractor.for_calldata(content_uri)
 
-        expect(result[0]).to eq('erc-20'.b)  # protocol
+        expect(result[0]).to eq('fixed-fungible'.b)  # protocol
         expect(result[1]).to eq('deploy'.b)   # operation
         expect(result[2]).not_to be_empty     # encoded data
 
@@ -151,7 +151,7 @@ RSpec.describe ProtocolExtractor do
 
         result = ProtocolExtractor.for_calldata(content_uri)
 
-        expect(result[0]).to eq('erc-20'.b)  # protocol
+        expect(result[0]).to eq('fixed-fungible'.b)  # protocol
         expect(result[1]).to eq('mint'.b)     # operation
         expect(result[2]).not_to be_empty     # encoded data
 

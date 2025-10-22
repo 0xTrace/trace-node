@@ -5,8 +5,6 @@ class FixedFungibleTokenParamsExtractor
   DEFAULT_PARAMS = [''.b, ''.b, ''.b, 0, 0, 0].freeze
   UINT256_MAX = 2**256 - 1
   
-  # The later is mostly historical
-
   # Exact regex patterns for valid formats
   # Protocol must be "erc-20" or "fixed-fungible" (case-sensitive)
   # Tick must be lowercase letters/numbers, max 28 chars
