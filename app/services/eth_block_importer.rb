@@ -383,14 +383,10 @@ class EthBlockImporter
       ValidationJob.perform_later(block_number, l2_block_hashes)
     end
 
-    # Removed noisy per-block timing logs
-
     ImportProfiler.stop("import_single_block")
 
     [imported_ethscriptions_blocks, [eth_block]]
   end
-  
-  # Legacy batch import method removed - use import_single_block instead
   
   def import_next_block
     block_number = next_block_to_import

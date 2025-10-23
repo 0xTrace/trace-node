@@ -8,13 +8,10 @@ class ProtocolEventReader
     'ProtocolHandlerSuccess' => 'ProtocolHandlerSuccess(bytes32,string,bytes)',
     'ProtocolHandlerFailed' => 'ProtocolHandlerFailed(bytes32,string,bytes)',
 
-    # ERC20FixedDenominationManager.sol events (including legacy aliases)
+    # ERC20FixedDenominationManager.sol events
     'ERC20FixedDenominationTokenDeployed' => 'ERC20FixedDenominationTokenDeployed(bytes32,address,string,uint256,uint256)',
     'ERC20FixedDenominationTokenMinted' => 'ERC20FixedDenominationTokenMinted(bytes32,address,uint256,bytes32)',
     'ERC20FixedDenominationTokenTransferred' => 'ERC20FixedDenominationTokenTransferred(bytes32,address,address,uint256,bytes32)',
-    'FixedFungibleTokenDeployed' => 'FixedFungibleTokenDeployed(bytes32,address,string,uint256,uint256)',
-    'FixedFungibleTokenMinted' => 'FixedFungibleTokenMinted(bytes32,address,uint256,bytes32)',
-    'FixedFungibleTokenTransferred' => 'FixedFungibleTokenTransferred(bytes32,address,address,uint256,bytes32)',
 
     # CollectionsManager.sol events
     # CollectionsManager.sol events (match actual signatures)

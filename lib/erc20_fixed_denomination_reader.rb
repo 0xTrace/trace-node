@@ -124,13 +124,6 @@ class Erc20FixedDenominationReader
     nil
   end
 
-  # Legacy compatibility - mints aren't tracked by ID in ERC20FixedDenominationManager
-  def self.get_mint(tick, mint_id, block_tag: 'latest')
-    # This would need to be reimplemented if mint tracking by ID is needed
-    # For now, return nil as ERC20FixedDenominationManager doesn't support this
-    nil
-  end
-
   def self.mint_exists?(tick, mint_id, block_tag: 'latest')
     # ERC20FixedDenominationManager doesn't track mints by tick+id
     false

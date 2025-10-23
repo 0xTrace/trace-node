@@ -135,12 +135,12 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
     }
 
     /// @notice Handle create_collection operation
-    function op_create_collection(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_create_collection(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         // Decode the operation data directly into CollectionMetadata
         CollectionMetadata memory metadata = abi.decode(data, (CollectionMetadata));
 
         // Use the ethscription hash as the collection ID
-        bytes32 collectionId = txHash;
+        bytes32 collectionId = ethscriptionId;
 
         // Check if collection already exists
         require(collectionState[collectionId].collectionContract == address(0), "Collection already exists");
@@ -165,7 +165,7 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
         // Store collection state
         collectionState[collectionId] = CollectionState({
             collectionContract: address(collectionProxy),
-            createEthscriptionId: txHash,
+            createEthscriptionId: ethscriptionId,
             currentSize: 0,
             locked: false
         });
@@ -179,10 +179,10 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
     }
 
     /// @notice Handle add_items_batch operation with full metadata
-    function op_add_items_batch(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_add_items_batch(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         // Get who is trying to add items
         Ethscriptions ethscriptionsContract = Ethscriptions(ethscriptions);
-        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(txHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(ethscriptionId);
         address sender = ethscription.creator;
 
         AddItemsBatchOperation memory addOp = abi.decode(data, (AddItemsBatchOperation));
@@ -242,14 +242,14 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
             collection.currentSize++;
         }
 
-        emit ItemsAdded(addOp.collectionId, addOp.items.length, txHash);
+        emit ItemsAdded(addOp.collectionId, addOp.items.length, ethscriptionId);
     }
 
     /// @notice Handle remove_items operation
-    function op_remove_items(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_remove_items(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         // Get who is trying to remove items
         Ethscriptions ethscriptionsContract = Ethscriptions(ethscriptions);
-        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(txHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(ethscriptionId);
         address sender = ethscription.creator;
 
         // Decode the operation data
@@ -283,13 +283,13 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
             collection.currentSize--;
         }
 
-        emit ItemsRemoved(removeOp.collectionId, removeOp.ethscriptionIds.length, txHash);
+        emit ItemsRemoved(removeOp.collectionId, removeOp.ethscriptionIds.length, ethscriptionId);
     }
 
     /// @notice Handle edit_collection operation
-    function op_edit_collection(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_edit_collection(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         Ethscriptions ethscriptionsContract = Ethscriptions(ethscriptions);
-        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(txHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(ethscriptionId);
         address sender = ethscription.creator;
 
         EditCollectionOperation memory editOp = abi.decode(data, (EditCollectionOperation));
@@ -315,9 +315,9 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
     }
 
     /// @notice Handle edit_collection_item operation
-    function op_edit_collection_item(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_edit_collection_item(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         Ethscriptions ethscriptionsContract = Ethscriptions(ethscriptions);
-        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(txHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(ethscriptionId);
         address sender = ethscription.creator;
 
         EditCollectionItemOperation memory editOp = abi.decode(data, (EditCollectionItemOperation));
@@ -347,10 +347,10 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
     }
 
     /// @notice Handle lock_collection operation
-    function op_lock_collection(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_lock_collection(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         // Get the ethscription details from the Ethscriptions contract
         Ethscriptions ethscriptionsContract = Ethscriptions(ethscriptions);
-        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(txHash);
+        Ethscriptions.Ethscription memory ethscription = ethscriptionsContract.getEthscription(ethscriptionId);
         address sender = ethscription.creator; // Who sent this lock operation
 
         // Decode just the collection ID
@@ -371,7 +371,7 @@ contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
 
     /// @notice Handle sync_ownership operation to sync ERC721 ownership with Ethscription ownership
     /// @dev Requires specifying the collection ID to sync for, to avoid iterating over unbounded user data
-    function op_sync_ownership(bytes calldata data) external onlyEthscriptions {
+    function op_sync_ownership(bytes32 ethscriptionId, bytes calldata data) external onlyEthscriptions {
         // User must specify which collection to sync for
         // Decode the operation: collection ID + ethscription IDs to sync
         (bytes32 collectionId, bytes32[] memory ethscriptionIds) = abi.decode(data, (bytes32, bytes32[]));

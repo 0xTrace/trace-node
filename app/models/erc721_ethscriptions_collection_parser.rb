@@ -361,7 +361,3 @@ class Erc721EthscriptionsCollectionParser
     [data['collection_id'], data['ethscription_ids']]
   end
 end
-
-# Legacy alias for previous class name
-CollectionsParamsExtractor = Erc721EthscriptionsCollectionParser
-ERC721EthscriptionsCollectionParamsExtractor = Erc721EthscriptionsCollectionParser
