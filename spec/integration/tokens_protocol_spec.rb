@@ -308,8 +308,8 @@ RSpec.describe "Tokens Protocol", type: :integration do
         # The token regex requires exact format with no extra spaces
         expect(stored[:content]).to include('erc-20')
 
-        token_params = FixedFungibleTokenParamsExtractor.extract(content_uri)
-        expect(token_params).to eq(FixedFungibleTokenParamsExtractor::DEFAULT_PARAMS)
+        token_params = Erc20FixedDenominationParser.extract(content_uri)
+        expect(token_params).to eq(Erc20FixedDenominationParser::DEFAULT_PARAMS)
       end
     end
 
@@ -418,7 +418,7 @@ RSpec.describe "Tokens Protocol", type: :integration do
         expect(token_state[:totalMinted]).to eq(0)
         expect(token_state[:ethscriptionId].downcase).to eq(ethscription_id.downcase)
         expect(token_state[:tokenContract]).to match(/^0x[0-9a-fA-F]{40}$/)
-        expect(token_state[:protocol]).to eq('fixed-fungible')
+        expect(token_state[:protocol]).to eq('erc-20-fixed-denomination')
       end
     end
 
@@ -589,7 +589,7 @@ RSpec.describe "Tokens Protocol", type: :integration do
   private
 
   def get_token_state(tick)
-    token = FixedFungibleReader.get_token(tick)
+    token = Erc20FixedDenominationReader.get_token(tick)
     return nil if token.nil?
 
     zero_address = '0x0000000000000000000000000000000000000000'
@@ -607,15 +607,15 @@ RSpec.describe "Tokens Protocol", type: :integration do
   end
 
   def token_exists?(tick)
-    FixedFungibleReader.token_exists?(tick)
+    Erc20FixedDenominationReader.token_exists?(tick)
   end
 
   def get_token_balance(tick, address)
-    FixedFungibleReader.get_token_balance(tick, address)
+    Erc20FixedDenominationReader.get_token_balance(tick, address)
   end
 
   def get_mint_item(ethscription_id)
-    item = FixedFungibleReader.get_token_item(ethscription_id)
+    item = Erc20FixedDenominationReader.get_token_item(ethscription_id)
 
     zero_bytes32 = '0x0000000000000000000000000000000000000000000000000000000000000000'
 

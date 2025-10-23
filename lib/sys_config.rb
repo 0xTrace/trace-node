@@ -9,7 +9,6 @@ module SysConfig
   SYSTEM_ADDRESS = Address20.from_hex("0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001")
   L1_INFO_ADDRESS = Address20.from_hex("0x4200000000000000000000000000000000000015")
   ETHSCRIPTIONS_ADDRESS = Address20.from_hex("0x3300000000000000000000000000000000000001")
-  FIXED_FUNGIBLE_HANDLER_ADDRESS = Address20.from_hex("0x3300000000000000000000000000000000000002")
   
   # Deposit transaction domains
   USER_DEPOSIT_SOURCE_DOMAIN = 0
@@ -19,9 +18,6 @@ module SysConfig
     ETHSCRIPTIONS_ADDRESS
   end
   
-  def fixed_fungible_handler_contract_address
-    FIXED_FUNGIBLE_HANDLER_ADDRESS
-  end
   
   def block_gas_limit(block = nil)
     L2_BLOCK_GAS_LIMIT

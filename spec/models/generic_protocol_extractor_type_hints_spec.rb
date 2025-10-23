@@ -4,7 +4,7 @@ RSpec.describe GenericProtocolExtractor, 'type hints' do
   describe 'with type hint arrays' do
     it 'handles empty array with type hint' do
       json = {
-        "p" => "collections",
+        "p" => "erc-721-ethscriptions-collection",
         "op" => "edit_item",
         "collectionId" => "0x1234",
         "itemIndex" => 42,
@@ -15,7 +15,7 @@ RSpec.describe GenericProtocolExtractor, 'type hints' do
       content_uri = "data:," + json.to_json
       result = described_class.extract(content_uri)
 
-      expect(result[0]).to eq('collections'.b)
+      expect(result[0]).to eq('erc-721-ethscriptions-collection'.b)
       expect(result[1]).to eq('edit_item'.b)
 
       # Decode the ABI data - now as tuple
@@ -28,7 +28,7 @@ RSpec.describe GenericProtocolExtractor, 'type hints' do
 
     it 'handles non-empty array with type hint' do
       json = {
-        "p" => "collections",
+        "p" => "erc-721-ethscriptions-collection",
         "op" => "edit_item",
         "attributes" => ["(string,string)[]", [
           {"trait_type" => "Color", "value" => "Red"},
@@ -108,7 +108,7 @@ RSpec.describe GenericProtocolExtractor, 'type hints' do
 
     it 'still works without type hints (backward compatible)' do
       json = {
-        "p" => "collections",
+        "p" => "erc-721-ethscriptions-collection",
         "op" => "edit_item",
         "name" => "Test",
         "attributes" => [

@@ -3,13 +3,13 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/utils/Create2.sol";
 import {LibString} from "solady/utils/LibString.sol";
-import "./CollectionsERC721.sol";
+import "./ERC721EthscriptionsCollection.sol";
 import "./libraries/Proxy.sol";
 import "./Ethscriptions.sol";
 import "./libraries/Predeploys.sol";
 import "./interfaces/IProtocolHandler.sol";
 
-contract CollectionsProtocolHandler is IProtocolHandler {
+contract ERC721EthscriptionsCollectionManager is IProtocolHandler {
     using LibString for string;
 
     // Standard NFT attribute structure
@@ -17,7 +17,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         string traitType;
         string value;
     }
-
 
     // Core collection metadata fields (reused across create/edit/storage)
     struct CollectionMetadata {
@@ -49,11 +48,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         string description;
         Attribute[] attributes;   // Standard NFT attribute format
     }
-
-    // Removed CollectionItem struct - now using nested mapping for multi-collection support
-
-    // Protocol operation structs - reuse CollectionMetadata
-    // For create, we just decode directly into CollectionMetadata
 
     struct AddItemsBatchOperation {
         bytes32 collectionId;
@@ -96,9 +90,10 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         // Note: Similar to ItemData but without ethscriptionId (can't change)
     }
 
-    address public constant collectionsImplementation = Predeploys.COLLECTIONS_TEMPLATE_IMPLEMENTATION;
+    address public constant collectionsImplementation = Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_IMPLEMENTATION;
     address public constant ethscriptions = Predeploys.ETHSCRIPTIONS;
-
+    string public constant protocolName = "erc-721-ethscriptions-collection";
+    
     // Track deployed collections by ID
     mapping(bytes32 => CollectionState) public collectionState;  // Runtime state (contract address, size, locked)
 
@@ -134,9 +129,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
     event CollectionEdited(bytes32 indexed collectionId);
     event CollectionLocked(bytes32 indexed collectionId);
 
-    // Mirror success signaling so indexers can detect success without relying on router
-    event ProtocolHandlerSuccess(bytes32 indexed ethscriptionId, string protocol);
-
     modifier onlyEthscriptions() {
         require(msg.sender == ethscriptions, "Only Ethscriptions contract");
         _;
@@ -161,7 +153,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
 
         // Initialize implementation via proxy
         bytes memory initCalldata = abi.encodeWithSelector(
-            CollectionsERC721.initialize.selector,
+            ERC721EthscriptionsCollection.initialize.selector,
             metadata.name,
             metadata.symbol,
             collectionId
@@ -184,7 +176,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         collectionIds.push(collectionId);
 
         emit CollectionCreated(collectionId, address(collectionProxy), metadata.name, metadata.symbol, totalSupply);
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle add_items_batch operation with full metadata
@@ -215,7 +206,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         }
 
         // Add each item with full metadata
-        CollectionsERC721 collectionContract = CollectionsERC721(collection.collectionContract);
+        ERC721EthscriptionsCollection collectionContract = ERC721EthscriptionsCollection(collection.collectionContract);
 
         for (uint256 i = 0; i < addOp.items.length; i++) {
             ItemData memory itemData = addOp.items[i];
@@ -252,7 +243,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         }
 
         emit ItemsAdded(addOp.collectionId, addOp.items.length, txHash);
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle remove_items operation
@@ -275,7 +265,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         require(currentOwner == sender, "Only collection owner can remove items");
 
         // Remove each ethscription from the collection
-        CollectionsERC721 collectionContract = CollectionsERC721(collection.collectionContract);
+        ERC721EthscriptionsCollection collectionContract = ERC721EthscriptionsCollection(collection.collectionContract);
         for (uint256 i = 0; i < removeOp.ethscriptionIds.length; i++) {
             bytes32 ethscriptionId = removeOp.ethscriptionIds[i];
 
@@ -294,7 +284,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         }
 
         emit ItemsRemoved(removeOp.collectionId, removeOp.ethscriptionIds.length, txHash);
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle edit_collection operation
@@ -323,7 +312,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         if (bytes(editOp.discordLink).length > 0) metadata.discordLink = editOp.discordLink;
 
         emit CollectionEdited(editOp.collectionId);
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle edit_collection_item operation
@@ -356,7 +344,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
                 item.attributes.push(editOp.attributes[i]);
             }
         }
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle lock_collection operation
@@ -378,14 +365,13 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         require(currentOwner == sender, "Only collection owner can lock");
 
         collection.locked = true;
-        CollectionsERC721(collection.collectionContract).lockCollection();
+        ERC721EthscriptionsCollection(collection.collectionContract).lockCollection();
         emit CollectionLocked(collectionId);
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle sync_ownership operation to sync ERC721 ownership with Ethscription ownership
     /// @dev Requires specifying the collection ID to sync for, to avoid iterating over unbounded user data
-    function op_sync_ownership(bytes32 txHash, bytes calldata data) external onlyEthscriptions {
+    function op_sync_ownership(bytes calldata data) external onlyEthscriptions {
         // User must specify which collection to sync for
         // Decode the operation: collection ID + ethscription IDs to sync
         (bytes32 collectionId, bytes32[] memory ethscriptionIds) = abi.decode(data, (bytes32, bytes32[]));
@@ -393,7 +379,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         CollectionState memory collection = collectionState[collectionId];
         require(collection.collectionContract != address(0), "Collection does not exist");
 
-        CollectionsERC721 collectionContract = CollectionsERC721(collection.collectionContract);
+        ERC721EthscriptionsCollection collectionContract = ERC721EthscriptionsCollection(collection.collectionContract);
 
         // Sync ownership for specified ethscriptions in this collection
         for (uint256 i = 0; i < ethscriptionIds.length; i++) {
@@ -406,7 +392,6 @@ contract CollectionsProtocolHandler is IProtocolHandler {
                 collectionContract.syncOwnership(tokenId, ethscriptionId);
             }
         }
-        emit ProtocolHandlerSuccess(txHash, protocolName());
     }
 
     /// @notice Handle transfer notification from Ethscriptions contract
@@ -415,18 +400,7 @@ contract CollectionsProtocolHandler is IProtocolHandler {
         bytes32 ethscriptionId,
         address from,
         address to
-    ) external override onlyEthscriptions {
-        // CollectionItem memory item = collectionItems[txHash];
-
-        // // If this ethscription is part of a collection, sync ownership
-        // if (item.collectionId != bytes32(0)) {
-        //     CollectionState memory collection = collectionState[item.collectionId];
-        //     if (collection.collectionContract != address(0)) {
-        //         // Sync the ownership in the ERC721 contract
-        //         CollectionsERC721(collection.collectionContract).syncOwnership(item.tokenId);
-        //     }
-        // }
-    }
+    ) external override onlyEthscriptions {}
 
     // View functions
 
@@ -469,11 +443,5 @@ contract CollectionsProtocolHandler is IProtocolHandler {
 
     function getAllCollections() external view returns (bytes32[] memory) {
         return collectionIds;
-    }
-
-    /// @notice Returns human-readable protocol name
-    /// @return The protocol name
-    function protocolName() public pure override returns (string memory) {
-        return "collections";
     }
 }

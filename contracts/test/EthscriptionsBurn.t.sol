@@ -138,7 +138,7 @@ contract EthscriptionsBurnTest is TestSetup {
         assertEq(ethscriptions.ownerOf(tokenId), alice);
     }
     
-    function testBurnCallsFixedFungibleProtocolHandlerHandleTransfer() public {
+    function testBurnCallsERC20FixedDenominationManagerHandleTransfer() public {
         // Create a simple non-token ethscription first to test basic burn
         bytes32 simpleTxHash = keccak256("simple_tx");
         Ethscriptions.CreateEthscriptionParams memory params = createTestParams(
@@ -160,7 +160,7 @@ contract EthscriptionsBurnTest is TestSetup {
         // Verify it's owned by address(0)
         assertEq(ethscriptions.ownerOf(simpleTokenId), address(0));
 
-        // The transfer should have called FixedFungibleProtocolHandler.handleTokenTransfer with to=address(0)
-        // This ensures FixedFungibleProtocolHandler is notified of transfers to null address
+        // The transfer should have called ERC20FixedDenominationManager.handleTokenTransfer with to=address(0)
+        // This ensures ERC20FixedDenominationManager is notified of transfers to null address
     }
 }

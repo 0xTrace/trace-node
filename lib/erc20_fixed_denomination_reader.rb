@@ -1,7 +1,7 @@
-class FixedFungibleReader
-  FIXED_FUNGIBLE_HANDLER_ADDRESS = '0x3300000000000000000000000000000000000002'
+class Erc20FixedDenominationReader
+  ERC20_FIXED_DENOMINATION_MANAGER_ADDRESS = '0x3300000000000000000000000000000000000002'
 
-  # Token struct returned by FixedFungibleProtocolHandler
+  # Token struct returned by ERC20FixedDenominationManager
   TOKEN_STRUCT = {
     'components' => [
       { 'name' => 'tick', 'type' => 'string' },
@@ -36,7 +36,7 @@ class FixedFungibleReader
 
     # Make the call
     result = EthRpcClient.l2.eth_call(
-      to: FIXED_FUNGIBLE_HANDLER_ADDRESS,
+      to: ERC20_FIXED_DENOMINATION_MANAGER_ADDRESS,
       data: data,
       block_number: block_tag
     )
@@ -59,7 +59,7 @@ class FixedFungibleReader
     {
       tokenContract: token_tuple[0],
       deployTxHash: '0x' + token_tuple[1].unpack1('H*'),
-      protocol: 'fixed-fungible',
+      protocol: 'erc-20-fixed-denomination',
       tick: token_tuple[2],
       maxSupply: token_tuple[3],
       mintLimit: token_tuple[4], # mintAmount field is used as mintLimit
@@ -81,7 +81,7 @@ class FixedFungibleReader
     token[:tokenContract] != '0x0000000000000000000000000000000000000000'
   end
 
-  # Note: FixedFungibleProtocolHandler doesn't track mints by tick+id, it tracks token items by ethscription hash
+  # Note: ERC20FixedDenominationManager doesn't track mints by tick+id, it tracks token items by ethscription hash
   # This method is kept for compatibility but may need redesign
   def self.get_token_item(ethscription_tx_hash, block_tag: 'latest')
     # Encode function call for getTokenItem(bytes32)
@@ -99,7 +99,7 @@ class FixedFungibleReader
 
     # Make the call
     result = EthRpcClient.l2.eth_call(
-      to: FIXED_FUNGIBLE_HANDLER_ADDRESS,
+      to: ERC20_FIXED_DENOMINATION_MANAGER_ADDRESS,
       data: data,
       block_number: block_tag
     )
@@ -124,15 +124,15 @@ class FixedFungibleReader
     nil
   end
 
-  # Legacy compatibility - mints aren't tracked by ID in FixedFungibleProtocolHandler
+  # Legacy compatibility - mints aren't tracked by ID in ERC20FixedDenominationManager
   def self.get_mint(tick, mint_id, block_tag: 'latest')
     # This would need to be reimplemented if mint tracking by ID is needed
-    # For now, return nil as FixedFungibleProtocolHandler doesn't support this
+    # For now, return nil as ERC20FixedDenominationManager doesn't support this
     nil
   end
 
   def self.mint_exists?(tick, mint_id, block_tag: 'latest')
-    # FixedFungibleProtocolHandler doesn't track mints by tick+id
+    # ERC20FixedDenominationManager doesn't track mints by tick+id
     false
   end
 

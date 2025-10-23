@@ -25,26 +25,20 @@ library Predeploys {
     /// @dev Moved to the 0x3300… namespace to align with other Ethscriptions predeploys
     address constant ETHSCRIPTIONS = 0x3300000000000000000000000000000000000001;
     
-    /// @notice FixedFungible protocol handler for managed ERC-20 semantics
-    address constant FIXED_FUNGIBLE_HANDLER = 0x3300000000000000000000000000000000000002;
+    /// @notice ERC20 fixed denomination manager for managed ERC-20 semantics
+    address constant ERC20_FIXED_DENOMINATION_MANAGER = 0x3300000000000000000000000000000000000002;
     
     /// @notice EthscriptionsProver for L1 provability
     address constant ETHSCRIPTIONS_PROVER = 0x3300000000000000000000000000000000000003;
 
-    /// @notice Proxy address reserved for the FixedFungible ERC20 template (blank proxy)
-    address constant FIXED_FUNGIBLE_TEMPLATE_PROXY = 0x3300000000000000000000000000000000000004;
+    /// @notice Implementation address for the ERC20 fixed denomination template (actual logic contract)
+    address constant ERC20_FIXED_DENOMINATION_IMPLEMENTATION = 0xc0D3c0D3c0D3c0d3c0d3C0d3C0d3c0D3C0D30004;
 
-    /// @notice Implementation address for the FixedFungible ERC20 template (actual logic contract)
-    address constant FIXED_FUNGIBLE_TEMPLATE_IMPLEMENTATION = 0xc0D3c0D3c0D3c0d3c0d3C0d3C0d3c0D3C0D30004;
+    /// @notice Implementation address for the ERC721 Ethscriptions collection template (actual logic contract)
+    address constant ERC721_ETHSCRIPTIONS_COLLECTION_IMPLEMENTATION = 0xc0d3C0d3c0D3c0d3C0D3C0D3c0D3C0D3c0d30005;
 
-    /// @notice Proxy address reserved for the Collections ERC721 template (blank proxy)
-    address constant COLLECTIONS_TEMPLATE_PROXY = 0x3300000000000000000000000000000000000005;
-
-    /// @notice Implementation address for the Collections ERC721 template (actual logic contract)
-    address constant COLLECTIONS_TEMPLATE_IMPLEMENTATION = 0xc0d3C0d3c0D3c0d3C0D3C0D3c0D3C0D3c0d30005;
-
-    /// @notice Collections protocol handler
-    address constant COLLECTIONS_PROTOCOL_HANDLER = 0x3300000000000000000000000000000000000006;
+    /// @notice ERC721 Ethscriptions collection manager
+    address constant ERC721_ETHSCRIPTIONS_COLLECTION_MANAGER = 0x3300000000000000000000000000000000000006;
     
     // ============ Helper Functions ============
     

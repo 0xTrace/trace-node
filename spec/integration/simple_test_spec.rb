@@ -52,7 +52,7 @@ RSpec.describe "Simple Ethscription Creation", type: :integration do
   it "tests content size limits" do
     # Test with increasing content sizes
     base_data = {
-      "p" => "collections",
+      "p" => "erc-721-ethscriptions-collection",
       "op" => "create_collection",
       "name" => "Test",
       "symbol" => "TST",
@@ -78,7 +78,7 @@ RSpec.describe "Simple Ethscription Creation", type: :integration do
 
     puts "Original content length: #{base_data.to_json.length}"
     puts "Stored content length: #{stored[:content].length}"
-    puts "Content starts with 'p': #{stored[:content].start_with?('{"p":"collections"')}"
+    puts "Content starts with 'p': #{stored[:content].start_with?('{"p":"erc-721-ethscriptions-collection"')}"
     puts "First 50 chars: #{stored[:content][0..49]}"
 
     # For debugging, show if content was truncated
@@ -93,7 +93,7 @@ RSpec.describe "Simple Ethscription Creation", type: :integration do
   it "creates a simple collections protocol ethscription" do
     # Try the simplest collections protocol data
     collection_data = {
-      "p" => "collections",
+      "p" => "erc-721-ethscriptions-collection",
       "op" => "create_collection",
       "name" => "Test",
       "symbol" => "TST",
@@ -119,11 +119,11 @@ RSpec.describe "Simple Ethscription Creation", type: :integration do
     puts "Collections test results:"
     puts "Ethscription ID: #{ethscription_id}"
     puts "Stored content: #{stored[:content].inspect}"
-    puts "Content includes 'p': #{stored[:content].include?('"p":"collections"')}"
+    puts "Content includes 'p': #{stored[:content].include?('"p":"erc-721-ethscriptions-collection"')}"
     puts "Full match: #{stored[:content] == collection_data.to_json}"
 
     expect(results[:ethscription_ids]).not_to be_empty, "Should create ethscription ID"
     expect(results[:l2_receipts]).not_to be_empty, "Should have L2 receipt"
-    expect(stored[:content]).to include('"p":"collections"'), "Content should include protocol"
+    expect(stored[:content]).to include('"p":"erc-721-ethscriptions-collection"'), "Content should include protocol"
   end
 end

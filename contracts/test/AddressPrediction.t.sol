@@ -4,21 +4,21 @@ pragma solidity ^0.8.24;
 import "forge-std/Test.sol";
 import "../src/libraries/Predeploys.sol";
 import "../src/libraries/Proxy.sol";
-import "../src/FixedFungibleProtocolHandler.sol";
-import "../src/CollectionsProtocolHandler.sol";
+import "../src/ERC20FixedDenominationManager.sol";
+import "../src/ERC721EthscriptionsCollectionManager.sol";
 import "../src/Ethscriptions.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
 import "./TestSetup.sol";
 
 contract AddressPredictionTest is TestSetup {
-    // Test predictable address for FixedFungibleProtocolHandler token proxies
-    function testPredictFixedFungibleTokenAddress() public {
+    // Test predictable address for ERC20FixedDenominationManager token proxies
+    function testPredictERC20FixedDenominationTokenAddress() public {
         // Arrange
         string memory tick = "eths";
         bytes32 deployTxHash = keccak256("deploy-eths");
 
         // Prepare deploy op data
-        FixedFungibleProtocolHandler.DeployOperation memory deployOp = FixedFungibleProtocolHandler.DeployOperation({
+        ERC20FixedDenominationManager.DeployOperation memory deployOp = ERC20FixedDenominationManager.DeployOperation({
             tick: tick,
             maxSupply: 1_000_000,
             mintAmount: 1_000
@@ -26,23 +26,23 @@ contract AddressPredictionTest is TestSetup {
         bytes memory data = abi.encode(deployOp);
 
         // Prediction via contract helper
-        address predicted = fixedFungibleHandler.predictTokenAddressByTick(tick);
+        address predicted = fixedDenominationManager.predictTokenAddressByTick(tick);
 
         // Act: call deploy as Ethscriptions (authorized)
         vm.prank(Predeploys.ETHSCRIPTIONS);
-        fixedFungibleHandler.op_deploy(deployTxHash, data);
+        fixedDenominationManager.op_deploy(deployTxHash, data);
 
         // Assert actual matches predicted
-        address actual = fixedFungibleHandler.getTokenAddressByTick(tick);
+        address actual = fixedDenominationManager.getTokenAddressByTick(tick);
         assertEq(actual, predicted, "Predicted token address should match actual deployed proxy");
     }
 
-    // Test predictable address for CollectionsProtocolHandler collection proxies
+    // Test predictable address for ERC721EthscriptionsCollectionManager collection proxies
     function testPredictCollectionsAddress() public {
         // Arrange
         bytes32 collectionId = keccak256("collection-1");
 
-        CollectionsProtocolHandler.CollectionMetadata memory metadata = CollectionsProtocolHandler.CollectionMetadata({
+        ERC721EthscriptionsCollectionManager.CollectionMetadata memory metadata = ERC721EthscriptionsCollectionManager.CollectionMetadata({
             name: "My Collection",
             symbol: "MYC",
             totalSupply: 1000,

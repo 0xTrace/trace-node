@@ -4,17 +4,17 @@ pragma solidity 0.8.24;
 import "./ERC20NullOwnerCappedUpgradeable.sol";
 import "./libraries/Predeploys.sol";
 
-/// @title FixedFungibleERC20
-/// @notice ERC-20 clone whose balances are controlled by the FixedFungible protocol handler
-/// @dev User-initiated transfers/approvals are disabled; only the handler can mutate balances.
-contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
+/// @title ERC20FixedDenomination
+/// @notice ERC-20 proxy whose supply is managed in a fixed denomination by the manager contract.
+/// @dev User-initiated transfers/approvals are disabled; only the manager can mutate balances.
+contract ERC20FixedDenomination is ERC20NullOwnerCappedUpgradeable {
 
     // =============================================================
     //                         CONSTANTS
     // =============================================================
 
-    /// @notice The FixedFungible protocol handler that controls this token
-    address public constant protocolHandler = Predeploys.FIXED_FUNGIBLE_HANDLER;
+    /// @notice The manager contract that controls this token
+    address public constant manager = Predeploys.ERC20_FIXED_DENOMINATION_MANAGER;
 
     // =============================================================
     //                      STATE VARIABLES
@@ -27,7 +27,7 @@ contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
     //                      CUSTOM ERRORS
     // =============================================================
 
-    error OnlyProtocolHandler();
+    error OnlyManager();
     error TransfersOnlyViaEthscriptions();
     error ApprovalsNotAllowed();
 
@@ -35,8 +35,8 @@ contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
     //                         MODIFIERS
     // =============================================================
 
-    modifier onlyProtocolHandler() {
-        if (msg.sender != protocolHandler) revert OnlyProtocolHandler();
+    modifier onlyManager() {
+        if (msg.sender != manager) revert OnlyManager();
         _;
     }
 
@@ -44,11 +44,6 @@ contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
     //                    EXTERNAL FUNCTIONS
     // =============================================================
 
-    /// @notice Initialize the ERC20 token
-    /// @param name_ The token name
-    /// @param symbol_ The token symbol
-    /// @param cap_ The maximum supply cap (in 18 decimals)
-    /// @param deployEthscriptionId_ The ethscription ID that deployed this token
     function initialize(
         string memory name_,
         string memory symbol_,
@@ -60,20 +55,13 @@ contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
         deployEthscriptionId = deployEthscriptionId_;
     }
 
-    /// @notice Mint tokens (protocol handler only)
-    /// @dev Allows minting to address(0) for null ownership
-    /// @param to The recipient address (can be address(0))
-    /// @param amount The amount to mint (in 18 decimals)
-    function mint(address to, uint256 amount) external onlyProtocolHandler {
+    /// @notice Mint tokens (manager only)
+    function mint(address to, uint256 amount) external onlyManager {
         _mint(to, amount);
     }
 
-    /// @notice Force transfer tokens (protocol handler only)
-    /// @dev Allows transfers to/from address(0) for null ownership
-    /// @param from The sender address (can be address(0))
-    /// @param to The recipient address (can be address(0))
-    /// @param amount The amount to transfer (in 18 decimals)
-    function forceTransfer(address from, address to, uint256 amount) external onlyProtocolHandler {
+    /// @notice Force transfer tokens (manager only)
+    function forceTransfer(address from, address to, uint256 amount) external onlyManager {
         _update(from, to, amount);
     }
 
@@ -81,20 +69,14 @@ contract FixedFungibleERC20 is ERC20NullOwnerCappedUpgradeable {
     //                DISABLED ERC20 FUNCTIONS
     // =============================================================
 
-    /// @notice User-initiated transfers are disabled
-    /// @dev All transfers must go through the Ethscriptions NFT
     function transfer(address, uint256) public pure override returns (bool) {
         revert TransfersOnlyViaEthscriptions();
     }
 
-    /// @notice User-initiated transfers are disabled
-    /// @dev All transfers must go through the Ethscriptions NFT
     function transferFrom(address, address, uint256) public pure override returns (bool) {
         revert TransfersOnlyViaEthscriptions();
     }
 
-    /// @notice Approvals are disabled
-    /// @dev All transfers are controlled by the FixedFungibleProtocolHandler
     function approve(address, uint256) public pure override returns (bool) {
         revert ApprovalsNotAllowed();
     }

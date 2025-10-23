@@ -5,7 +5,7 @@ RSpec.describe GenericProtocolExtractor do
     describe 'create_collection' do
       it 'encodes create_collection with all string parameters' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "create_collection",
           "name" => "Test Collection",
           "symbol" => "TEST",
@@ -22,7 +22,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("create_collection")
         expect(result[2]).not_to be_empty
 
@@ -48,7 +48,7 @@ RSpec.describe GenericProtocolExtractor do
     describe 'add_items_batch with nested arrays' do
       it 'preserves nested attribute arrays as string[][]' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "add_items_batch",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "items" => [
@@ -70,7 +70,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("add_items_batch")
         expect(result[2]).not_to be_empty
 
@@ -98,7 +98,7 @@ RSpec.describe GenericProtocolExtractor do
 
       it 'handles empty attributes array' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "add_items_batch",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "items" => [
@@ -116,14 +116,14 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("add_items_batch")
         expect(result[2]).not_to be_empty
       end
 
       it 'accepts standard NFT attribute format' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "add_items_batch",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "items" => [
@@ -145,7 +145,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("add_items_batch")
         expect(result[2]).not_to be_empty
 
@@ -165,7 +165,7 @@ RSpec.describe GenericProtocolExtractor do
 
       it 'accepts object format for better readability' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "add_items_batch",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "items" => [
@@ -187,7 +187,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("add_items_batch")
         expect(result[2]).not_to be_empty
 
@@ -208,7 +208,7 @@ RSpec.describe GenericProtocolExtractor do
 
       it 'validates consistent inner array sizes for attributes' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "add_items_batch",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "items" => [
@@ -235,7 +235,7 @@ RSpec.describe GenericProtocolExtractor do
 
       it 'handles numeric values in attributes properly' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "add_items_batch",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "items" => [
@@ -256,7 +256,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("add_items_batch")
         expect(result[2]).not_to be_empty
 
@@ -274,7 +274,7 @@ RSpec.describe GenericProtocolExtractor do
     describe 'edit_collection' do
       it 'encodes edit_collection operation with flattened structure' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "edit_collection",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "description" => "Updated description",
@@ -289,7 +289,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("edit_collection")
         expect(result[2]).not_to be_empty
 
@@ -313,7 +313,7 @@ RSpec.describe GenericProtocolExtractor do
     describe 'edit_collection_item' do
       it 'encodes edit_collection_item with updated attributes' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "edit_collection_item",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "itemIndex" => "42",
@@ -329,7 +329,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("edit_collection_item")
         expect(result[2]).not_to be_empty
 
@@ -351,7 +351,7 @@ RSpec.describe GenericProtocolExtractor do
     describe 'bytes32 handling' do
       it 'correctly encodes bytes32 values' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "remove_items",
           "collectionId" => "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
           "ethscriptionIds" => [
@@ -363,7 +363,7 @@ RSpec.describe GenericProtocolExtractor do
         content_uri = "data:," + json.to_json
         result = described_class.extract(content_uri)
 
-        expect(result[0]).to eq("collections")
+        expect(result[0]).to eq("erc-721-ethscriptions-collection")
         expect(result[1]).to eq("remove_items")
 
         # Verify bytes32 encoding - now as tuple
@@ -414,7 +414,7 @@ RSpec.describe GenericProtocolExtractor do
     describe 'numeric string handling' do
       it 'converts numeric strings to uint256' do
         json = {
-          "p" => "collections",
+          "p" => "erc-721-ethscriptions-collection",
           "op" => "test",
           "totalSupply" => "10000",
           "maxSize" => "999999999",

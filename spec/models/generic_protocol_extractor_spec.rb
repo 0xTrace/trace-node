@@ -6,11 +6,11 @@ RSpec.describe GenericProtocolExtractor do
   describe '.extract' do
     context 'collections protocol' do
       it 'extracts createCollection operation with string numbers' do
-        content_uri = 'data:,{"p":"collections","op":"create_collection","name":"My NFTs","symbol":"MNFT","maxSupply":"10000","baseUri":"https://api.example.com/"}'
+        content_uri = 'data:,{"p":"erc-721-ethscriptions-collection","op":"create_collection","name":"My NFTs","symbol":"MNFT","maxSupply":"10000","baseUri":"https://api.example.com/"}'
 
         protocol, operation, encoded_data = GenericProtocolExtractor.extract(content_uri)
 
-        expect(protocol).to eq('collections'.b)
+        expect(protocol).to eq('erc-721-ethscriptions-collection'.b)
         expect(operation).to eq('create_collection'.b)
 
         # Decode to verify encoding - order matches JSON field order
@@ -26,11 +26,11 @@ RSpec.describe GenericProtocolExtractor do
       end
 
       it 'handles add_members operation with address arrays' do
-        content_uri = 'data:,{"p":"collections","op":"add_members","collectionId":"0x1234567890abcdef1234567890abcdef12345678","members":["0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1","0x5aAeb6053f3E94C9b9A09f33669435E7Ef1BeAed"]}'
+        content_uri = 'data:,{"p":"erc-721-ethscriptions-collection","op":"add_members","collectionId":"0x1234567890abcdef1234567890abcdef12345678","members":["0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1","0x5aAeb6053f3E94C9b9A09f33669435E7Ef1BeAed"]}'
 
         protocol, operation, encoded_data = GenericProtocolExtractor.extract(content_uri)
 
-        expect(protocol).to eq('collections'.b)
+        expect(protocol).to eq('erc-721-ethscriptions-collection'.b)
         expect(operation).to eq('add_members'.b)
 
         # Arrays are supported - now encoded as tuple
@@ -433,13 +433,13 @@ RSpec.describe GenericProtocolExtractor do
     end
 
     context 'fixed fungible extraction helper' do
-      it 'uses FixedFungibleTokenParamsExtractor for erc-20 inscriptions' do
+      it 'uses Erc20FixedDenominationParser for erc-20 inscriptions' do
         content_uri = 'data:,{"p":"erc-20","op":"mint","tick":"punk","id":"1","amt":"100"}'
 
         # The token protocol should still use its strict extractor
         token_params = GenericProtocolExtractor.extract_token_params(content_uri)
 
-        expect(token_params).to eq(['mint'.b, 'fixed-fungible'.b, 'punk'.b, 1, 0, 100])
+        expect(token_params).to eq(['mint'.b, 'erc-20-fixed-denomination'.b, 'punk'.b, 1, 0, 100])
       end
     end
 

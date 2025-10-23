@@ -2,11 +2,11 @@
 pragma solidity ^0.8.24;
 
 import "./TestSetup.sol";
-import "../src/CollectionsProtocolHandler.sol";
-import "../src/CollectionsERC721.sol";
+import "../src/ERC721EthscriptionsCollectionManager.sol";
+import "../src/ERC721EthscriptionsCollection.sol";
 import {LibString} from "solady/utils/LibString.sol";
 
-contract CollectionsProtocolHandlerTest is TestSetup {
+contract ERC721EthscriptionsCollectionManagerTest is TestSetup {
     using LibString for *;
     address alice = address(0xa11ce);
     address bob = address(0xb0b);
@@ -25,9 +25,9 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Create a collection as Alice
         vm.prank(alice);
 
-        string memory collectionContent = 'data:,{"p":"collections","op":"create_collection","name":"Test Collection","symbol":"TEST","total_supply":"100"}';
+        string memory collectionContent = 'data:,{"p":"erc-721-ethscriptions-collection","op":"create_collection","name":"Test Collection","symbol":"TEST","total_supply":"100"}';
 
-        CollectionsProtocolHandler.CollectionMetadata memory metadata = CollectionsProtocolHandler.CollectionMetadata({
+        ERC721EthscriptionsCollectionManager.CollectionMetadata memory metadata = ERC721EthscriptionsCollectionManager.CollectionMetadata({
             name: "Test Collection",
             symbol: "TEST",
             totalSupply: 100,
@@ -48,7 +48,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "application/json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "create_collection",
                 data: abi.encode(metadata)
             })
@@ -60,13 +60,13 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
         assertTrue(collectionAddress != address(0));
 
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
         assertEq(collection.name(), "Test Collection");
         assertEq(collection.symbol(), "TEST");
         // Collection owner is tracked through the original ethscription ownership
 
         // Verify metadata was stored
-        CollectionsProtocolHandler.CollectionMetadata memory storedMetadata = collectionsHandler.getCollectionMetadata(COLLECTION_TX_HASH);
+        ERC721EthscriptionsCollectionManager.CollectionMetadata memory storedMetadata = collectionsHandler.getCollectionMetadata(COLLECTION_TX_HASH);
         assertEq(storedMetadata.name, "Test Collection");
         assertEq(storedMetadata.symbol, "TEST");
         assertEq(storedMetadata.totalSupply, 100);
@@ -79,34 +79,34 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testCreateCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Create an ethscription to add to the collection
         vm.prank(alice);
 
-        string memory itemContent = 'data:,{"p":"collections","op":"add","collection":"0x1234","item":"artwork1"}';
+        string memory itemContent = 'data:,{"p":"erc-721-ethscriptions-collection","op":"add","collection":"0x1234","item":"artwork1"}';
 
         bytes32[] memory items = new bytes32[](1);
         items[0] = ITEM1_TX_HASH;
 
         // Create item data with attributes
-        CollectionsProtocolHandler.ItemData[] memory itemsData = new CollectionsProtocolHandler.ItemData[](1);
+        ERC721EthscriptionsCollectionManager.ItemData[] memory itemsData = new ERC721EthscriptionsCollectionManager.ItemData[](1);
 
-        CollectionsProtocolHandler.Attribute[] memory attributes = new CollectionsProtocolHandler.Attribute[](3);
-        attributes[0] = CollectionsProtocolHandler.Attribute({
+        ERC721EthscriptionsCollectionManager.Attribute[] memory attributes = new ERC721EthscriptionsCollectionManager.Attribute[](3);
+        attributes[0] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Type",
             value: "Artwork"
         });
-        attributes[1] = CollectionsProtocolHandler.Attribute({
+        attributes[1] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Rarity",
             value: "Common"
         });
-        attributes[2] = CollectionsProtocolHandler.Attribute({
+        attributes[2] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Color",
             value: "Blue"
         });
 
-        itemsData[0] = CollectionsProtocolHandler.ItemData({
+        itemsData[0] = ERC721EthscriptionsCollectionManager.ItemData({
             itemIndex: 0,
             name: "Test Item #0",
             ethscriptionId: ITEM1_TX_HASH,
@@ -115,7 +115,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             attributes: attributes
         });
 
-        CollectionsProtocolHandler.AddItemsBatchOperation memory addOp = CollectionsProtocolHandler.AddItemsBatchOperation({
+        ERC721EthscriptionsCollectionManager.AddItemsBatchOperation memory addOp = ERC721EthscriptionsCollectionManager.AddItemsBatchOperation({
             collectionId: COLLECTION_TX_HASH,
             items: itemsData
         });
@@ -128,7 +128,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "application/json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "add_items_batch",
                 data: abi.encode(addOp)
             })
@@ -138,7 +138,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         ethscriptions.createEthscription(itemParams);
 
         // Verify item was added with metadata
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
         assertEq(item.name, "Test Item #0");
         assertEq(item.ethscriptionId, ITEM1_TX_HASH);
         assertEq(item.backgroundColor, "#0000FF");
@@ -155,8 +155,8 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Token ID is the item index (0 for the first item)
         uint256 tokenId = 0;
         assertEq(collection.ownerOf(tokenId), alice);
-        // Verify item is in collection via CollectionsProtocolHandler
-        CollectionsProtocolHandler.CollectionItem memory item2 = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, tokenId);
+        // Verify item is in collection via ERC721EthscriptionsCollectionManager
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item2 = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, tokenId);
         assertEq(item2.ethscriptionId, ITEM1_TX_HASH);
     }
 
@@ -165,7 +165,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testAddToCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Transfer the ethscription NFT
         vm.prank(alice);
@@ -182,7 +182,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testAddToCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Burn the ethscription (transfer to address(0))
         vm.prank(alice);
@@ -199,17 +199,17 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testAddToCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Remove item from collection (only collection owner can do this)
         vm.prank(alice);
 
-        string memory removeContent = 'data:,{"p":"collections","op":"remove","collection":"0x1234","item":"0x5678"}';
+        string memory removeContent = 'data:,{"p":"erc-721-ethscriptions-collection","op":"remove","collection":"0x1234","item":"0x5678"}';
 
         bytes32[] memory itemsToRemove = new bytes32[](1);
         itemsToRemove[0] = ITEM1_TX_HASH;
 
-        CollectionsProtocolHandler.RemoveItemsOperation memory removeOp = CollectionsProtocolHandler.RemoveItemsOperation({
+        ERC721EthscriptionsCollectionManager.RemoveItemsOperation memory removeOp = ERC721EthscriptionsCollectionManager.RemoveItemsOperation({
             collectionId: COLLECTION_TX_HASH,
             ethscriptionIds: itemsToRemove
         });
@@ -222,7 +222,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "application/json",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "remove_items",
                 data: abi.encode(removeOp)
             })
@@ -242,7 +242,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testAddToCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Try to remove item as non-owner (should fail silently)
         vm.prank(bob);
@@ -250,7 +250,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         bytes32[] memory itemsToRemove = new bytes32[](1);
         itemsToRemove[0] = ITEM1_TX_HASH;
 
-        CollectionsProtocolHandler.RemoveItemsOperation memory removeOp = CollectionsProtocolHandler.RemoveItemsOperation({
+        ERC721EthscriptionsCollectionManager.RemoveItemsOperation memory removeOp = ERC721EthscriptionsCollectionManager.RemoveItemsOperation({
             collectionId: COLLECTION_TX_HASH,
             ethscriptionIds: itemsToRemove
         });
@@ -263,7 +263,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "remove_items",
                 data: abi.encode(removeOp)
             })
@@ -283,7 +283,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testCreateCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Add multiple items
         bytes32[3] memory itemHashes = [ITEM1_TX_HASH, ITEM2_TX_HASH, ITEM3_TX_HASH];
@@ -293,17 +293,17 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             vm.prank(alice);
 
             // Create item data for the batch add
-            CollectionsProtocolHandler.ItemData[] memory itemsData = new CollectionsProtocolHandler.ItemData[](1);
+            ERC721EthscriptionsCollectionManager.ItemData[] memory itemsData = new ERC721EthscriptionsCollectionManager.ItemData[](1);
 
-            CollectionsProtocolHandler.Attribute[] memory attributes = new CollectionsProtocolHandler.Attribute[](1);
-            attributes[0] = CollectionsProtocolHandler.Attribute({
+            ERC721EthscriptionsCollectionManager.Attribute[] memory attributes = new ERC721EthscriptionsCollectionManager.Attribute[](1);
+            attributes[0] = ERC721EthscriptionsCollectionManager.Attribute({
                 traitType: "Type",
                 value: "Test"
             });
 
             string memory itemName = i == 0 ? "Item #0" : i == 1 ? "Item #1" : "Item #2";
 
-            itemsData[0] = CollectionsProtocolHandler.ItemData({
+            itemsData[0] = ERC721EthscriptionsCollectionManager.ItemData({
                 itemIndex: uint256(i),
                 name: itemName,
                 ethscriptionId: itemHashes[i],
@@ -312,7 +312,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
                 attributes: attributes
             });
 
-            CollectionsProtocolHandler.AddItemsBatchOperation memory addOp = CollectionsProtocolHandler.AddItemsBatchOperation({
+            ERC721EthscriptionsCollectionManager.AddItemsBatchOperation memory addOp = ERC721EthscriptionsCollectionManager.AddItemsBatchOperation({
                 collectionId: COLLECTION_TX_HASH,
                 items: itemsData
             });
@@ -325,7 +325,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
                 mimetype: "text/plain",
                 esip6: false,
                 protocolParams: Ethscriptions.ProtocolParams({
-                    protocolName: "collections",
+                    protocolName: "erc-721-ethscriptions-collection",
                     operation: "add_items_batch",
                     data: abi.encode(addOp)
                 })
@@ -349,7 +349,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testCreateCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Create an ethscription with image content to add
         vm.prank(alice);
@@ -357,27 +357,27 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         string memory imageContent = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
 
         // Create item data with attributes
-        CollectionsProtocolHandler.ItemData[] memory itemsData = new CollectionsProtocolHandler.ItemData[](1);
+        ERC721EthscriptionsCollectionManager.ItemData[] memory itemsData = new ERC721EthscriptionsCollectionManager.ItemData[](1);
 
-        CollectionsProtocolHandler.Attribute[] memory attributes = new CollectionsProtocolHandler.Attribute[](4);
-        attributes[0] = CollectionsProtocolHandler.Attribute({
+        ERC721EthscriptionsCollectionManager.Attribute[] memory attributes = new ERC721EthscriptionsCollectionManager.Attribute[](4);
+        attributes[0] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Type",
             value: "Female"
         });
-        attributes[1] = CollectionsProtocolHandler.Attribute({
+        attributes[1] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Hair",
             value: "Blonde Bob"
         });
-        attributes[2] = CollectionsProtocolHandler.Attribute({
+        attributes[2] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Eyes",
             value: "Green Eye Shadow"
         });
-        attributes[3] = CollectionsProtocolHandler.Attribute({
+        attributes[3] = ERC721EthscriptionsCollectionManager.Attribute({
             traitType: "Rarity",
             value: "Rare"
         });
 
-        itemsData[0] = CollectionsProtocolHandler.ItemData({
+        itemsData[0] = ERC721EthscriptionsCollectionManager.ItemData({
             itemIndex: 0,
             name: "Ittybit #0000",
             ethscriptionId: ITEM1_TX_HASH,
@@ -386,7 +386,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             attributes: attributes
         });
 
-        CollectionsProtocolHandler.AddItemsBatchOperation memory addOp = CollectionsProtocolHandler.AddItemsBatchOperation({
+        ERC721EthscriptionsCollectionManager.AddItemsBatchOperation memory addOp = ERC721EthscriptionsCollectionManager.AddItemsBatchOperation({
             collectionId: COLLECTION_TX_HASH,
             items: itemsData
         });
@@ -400,7 +400,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "image/png",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "add_items_batch",
                 data: abi.encode(addOp)
             })
@@ -410,7 +410,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         ethscriptions.createEthscription(itemParams);
 
         // Get the token URI and verify it contains the expected data
-        // Get tokenId from CollectionsProtocolHandler (it should be 0)
+        // Get tokenId from ERC721EthscriptionsCollectionManager (it should be 0)
         uint256 tokenId = 0;
         string memory tokenUri = collection.tokenURI(tokenId);
 
@@ -420,7 +420,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         assertTrue(LibString.startsWith(tokenUri, "data:application/json;base64,"));
 
         // Verify the item metadata was stored correctly
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
         assertEq(item.name, "Ittybit #0000");
         assertEq(item.backgroundColor, "#648595");
         assertEq(item.attributes.length, 4);
@@ -447,12 +447,12 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Edit item 0 - update name, description, and attributes
         vm.prank(alice);
 
-        CollectionsProtocolHandler.Attribute[] memory newAttributes = new CollectionsProtocolHandler.Attribute[](3);
-        newAttributes[0] = CollectionsProtocolHandler.Attribute({traitType: "Color", value: "Blue"});
-        newAttributes[1] = CollectionsProtocolHandler.Attribute({traitType: "Size", value: "Large"});
-        newAttributes[2] = CollectionsProtocolHandler.Attribute({traitType: "Rarity", value: "Epic"});
+        ERC721EthscriptionsCollectionManager.Attribute[] memory newAttributes = new ERC721EthscriptionsCollectionManager.Attribute[](3);
+        newAttributes[0] = ERC721EthscriptionsCollectionManager.Attribute({traitType: "Color", value: "Blue"});
+        newAttributes[1] = ERC721EthscriptionsCollectionManager.Attribute({traitType: "Size", value: "Large"});
+        newAttributes[2] = ERC721EthscriptionsCollectionManager.Attribute({traitType: "Rarity", value: "Epic"});
 
-        CollectionsProtocolHandler.EditCollectionItemOperation memory editOp = CollectionsProtocolHandler.EditCollectionItemOperation({
+        ERC721EthscriptionsCollectionManager.EditCollectionItemOperation memory editOp = ERC721EthscriptionsCollectionManager.EditCollectionItemOperation({
             collectionId: COLLECTION_TX_HASH,
             itemIndex: 0,
             name: "Updated Item Name",
@@ -469,7 +469,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "edit_collection_item",
                 data: abi.encode(editOp)
             })
@@ -479,7 +479,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         ethscriptions.createEthscription(editParams);
 
         // Verify item was updated
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
         assertEq(item.name, "Updated Item Name");
         assertEq(item.backgroundColor, "#0000FF");
         assertEq(item.description, "This item has been updated");
@@ -515,12 +515,12 @@ contract CollectionsProtocolHandlerTest is TestSetup {
 
         // Now add item with attributes
         vm.prank(alice);
-        CollectionsProtocolHandler.Attribute[] memory attributes = new CollectionsProtocolHandler.Attribute[](2);
-        attributes[0] = CollectionsProtocolHandler.Attribute({traitType: "Hair Color", value: "Brown"});
-        attributes[1] = CollectionsProtocolHandler.Attribute({traitType: "Hair", value: "Blonde Bob"});
+        ERC721EthscriptionsCollectionManager.Attribute[] memory attributes = new ERC721EthscriptionsCollectionManager.Attribute[](2);
+        attributes[0] = ERC721EthscriptionsCollectionManager.Attribute({traitType: "Hair Color", value: "Brown"});
+        attributes[1] = ERC721EthscriptionsCollectionManager.Attribute({traitType: "Hair", value: "Blonde Bob"});
 
-        CollectionsProtocolHandler.ItemData[] memory items = new CollectionsProtocolHandler.ItemData[](1);
-        items[0] = CollectionsProtocolHandler.ItemData({
+        ERC721EthscriptionsCollectionManager.ItemData[] memory items = new ERC721EthscriptionsCollectionManager.ItemData[](1);
+        items[0] = ERC721EthscriptionsCollectionManager.ItemData({
             itemIndex: 0,
             name: "Test Item #0",
             ethscriptionId: ITEM1_TX_HASH,
@@ -529,7 +529,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             attributes: attributes
         });
 
-        CollectionsProtocolHandler.AddItemsBatchOperation memory addOp = CollectionsProtocolHandler.AddItemsBatchOperation({
+        ERC721EthscriptionsCollectionManager.AddItemsBatchOperation memory addOp = ERC721EthscriptionsCollectionManager.AddItemsBatchOperation({
             collectionId: COLLECTION_TX_HASH,
             items: items
         });
@@ -542,7 +542,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "add_items_batch",
                 data: abi.encode(addOp)
             })
@@ -554,13 +554,13 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Edit item 0 - only update name and description, keep existing attributes
         vm.prank(alice);
 
-        CollectionsProtocolHandler.EditCollectionItemOperation memory editOp = CollectionsProtocolHandler.EditCollectionItemOperation({
+        ERC721EthscriptionsCollectionManager.EditCollectionItemOperation memory editOp = ERC721EthscriptionsCollectionManager.EditCollectionItemOperation({
             collectionId: COLLECTION_TX_HASH,
             itemIndex: 0,
             name: "Partially Updated",
             backgroundColor: "", // Empty string - don't update
             description: "Only name and description changed",
-            attributes: new CollectionsProtocolHandler.Attribute[](0) // Empty array - keep existing
+            attributes: new ERC721EthscriptionsCollectionManager.Attribute[](0) // Empty array - keep existing
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
@@ -571,7 +571,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "edit_collection_item",
                 data: abi.encode(editOp)
             })
@@ -581,7 +581,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         ethscriptions.createEthscription(editParams);
 
         // Verify partial update
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
         assertEq(item.name, "Partially Updated");
         assertEq(item.description, "Only name and description changed");
         assertEq(item.backgroundColor, "#FF5733"); // Original value preserved
@@ -597,13 +597,13 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Try to edit item as non-owner (should revert)
         vm.prank(bob);
 
-        CollectionsProtocolHandler.EditCollectionItemOperation memory editOp = CollectionsProtocolHandler.EditCollectionItemOperation({
+        ERC721EthscriptionsCollectionManager.EditCollectionItemOperation memory editOp = ERC721EthscriptionsCollectionManager.EditCollectionItemOperation({
             collectionId: COLLECTION_TX_HASH,
             itemIndex: 0,
             name: "Unauthorized Edit",
             backgroundColor: "#000000",
             description: "This should not work",
-            attributes: new CollectionsProtocolHandler.Attribute[](0)
+            attributes: new ERC721EthscriptionsCollectionManager.Attribute[](0)
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
@@ -614,7 +614,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "edit_collection_item",
                 data: abi.encode(editOp)
             })
@@ -624,7 +624,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         ethscriptions.createEthscription(editParams);
 
         // Verify item was not changed
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
         assertEq(item.name, "Test Item #0"); // Original name preserved
     }
 
@@ -635,13 +635,13 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Try to edit non-existent item (should revert)
         vm.prank(alice);
 
-        CollectionsProtocolHandler.EditCollectionItemOperation memory editOp = CollectionsProtocolHandler.EditCollectionItemOperation({
+        ERC721EthscriptionsCollectionManager.EditCollectionItemOperation memory editOp = ERC721EthscriptionsCollectionManager.EditCollectionItemOperation({
             collectionId: COLLECTION_TX_HASH,
             itemIndex: 999, // Non-existent index
             name: "Should Fail",
             backgroundColor: "#000000",
             description: "This item doesn't exist",
-            attributes: new CollectionsProtocolHandler.Attribute[](0)
+            attributes: new ERC721EthscriptionsCollectionManager.Attribute[](0)
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
@@ -652,7 +652,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "edit_collection_item",
                 data: abi.encode(editOp)
             })
@@ -663,7 +663,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
 
         // The operation should fail silently (no revert in createEthscription)
         // Verify by checking that getting the item returns default values
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 999);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 999);
         assertEq(item.ethscriptionId, bytes32(0)); // Default value for non-existent item
     }
 
@@ -673,7 +673,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
 
         // Get the collection contract
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Initially Alice owns the token
         assertEq(collection.ownerOf(0), alice);
@@ -701,7 +701,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "sync_ownership",
                 data: abi.encode(COLLECTION_TX_HASH, ethscriptionIds)
             })
@@ -719,7 +719,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         testMultipleItemsInCollection();
 
         address collectionAddress = collectionsHandler.getCollectionAddress(COLLECTION_TX_HASH);
-        CollectionsERC721 collection = CollectionsERC721(collectionAddress);
+        ERC721EthscriptionsCollection collection = ERC721EthscriptionsCollection(collectionAddress);
 
         // Transfer multiple ethscriptions to different owners
         vm.prank(alice);
@@ -748,7 +748,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "sync_ownership",
                 data: abi.encode(COLLECTION_TX_HASH, ethscriptionIds)
             })
@@ -778,7 +778,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "sync_ownership",
                 data: abi.encode(COLLECTION_TX_HASH, ethscriptionIds)
             })
@@ -804,7 +804,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "sync_ownership",
                 data: abi.encode(fakeCollectionId, ethscriptionIds)
             })
@@ -832,7 +832,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "lock_collection",
                 data: abi.encode(COLLECTION_TX_HASH)
             })
@@ -844,13 +844,13 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         // Try to edit item in locked collection (should fail)
         vm.prank(alice);
 
-        CollectionsProtocolHandler.EditCollectionItemOperation memory editOp = CollectionsProtocolHandler.EditCollectionItemOperation({
+        ERC721EthscriptionsCollectionManager.EditCollectionItemOperation memory editOp = ERC721EthscriptionsCollectionManager.EditCollectionItemOperation({
             collectionId: COLLECTION_TX_HASH,
             itemIndex: 0,
             name: "Should not update",
             backgroundColor: "#000000",
             description: "Collection is locked",
-            attributes: new CollectionsProtocolHandler.Attribute[](0)
+            attributes: new ERC721EthscriptionsCollectionManager.Attribute[](0)
         });
 
         Ethscriptions.CreateEthscriptionParams memory editParams = Ethscriptions.CreateEthscriptionParams({
@@ -861,7 +861,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
             mimetype: "text/plain",
             esip6: false,
             protocolParams: Ethscriptions.ProtocolParams({
-                protocolName: "collections",
+                protocolName: "erc-721-ethscriptions-collection",
                 operation: "edit_collection_item",
                 data: abi.encode(editOp)
             })
@@ -871,7 +871,7 @@ contract CollectionsProtocolHandlerTest is TestSetup {
         ethscriptions.createEthscription(editParams);
 
         // Verify item was not changed
-        CollectionsProtocolHandler.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = collectionsHandler.getCollectionItem(COLLECTION_TX_HASH, 0);
         assertEq(item.name, "Test Item #0"); // Original name preserved
     }
 }

@@ -1,8 +1,8 @@
 # Unified protocol extractor that delegates to appropriate extractors
 class ProtocolExtractor
   # Default return values to check if extraction succeeded
-  TOKEN_DEFAULT_PARAMS = FixedFungibleTokenParamsExtractor::DEFAULT_PARAMS
-  COLLECTIONS_DEFAULT_PARAMS = CollectionsParamsExtractor::DEFAULT_PARAMS
+  TOKEN_DEFAULT_PARAMS = Erc20FixedDenominationParser::DEFAULT_PARAMS
+  COLLECTIONS_DEFAULT_PARAMS = Erc721EthscriptionsCollectionParser::DEFAULT_PARAMS
   GENERIC_DEFAULT_PARAMS = GenericProtocolExtractor::DEFAULT_PARAMS
 
   def self.extract(content_uri)
@@ -45,15 +45,15 @@ class ProtocolExtractor
   private
 
   def self.try_token_extractor(content_uri)
-    # FixedFungibleTokenParamsExtractor uses strict regex and returns DEFAULT_PARAMS if no match
+    # Erc20FixedDenominationParser uses strict regex and returns DEFAULT_PARAMS if no match
     # This enforces non-ESIP6 and exact JSON formatting implicitly.
-    params = FixedFungibleTokenParamsExtractor.extract(content_uri)
+    params = Erc20FixedDenominationParser.extract(content_uri)
 
     # Check if extraction succeeded (returns non-default params)
     if params != TOKEN_DEFAULT_PARAMS
       {
-        type: :fixed_fungible,
-        protocol: 'fixed-fungible',
+        type: :erc20_fixed_denomination,
+        protocol: 'erc-20-fixed-denomination',
         operation: params[0], # 'deploy' or 'mint'
         params: params,
         encoded_params: encode_token_params(params)
@@ -64,13 +64,13 @@ class ProtocolExtractor
   end
 
   def self.try_collections_extractor(content_uri)
-    # CollectionsParamsExtractor returns [''.b, ''.b, ''.b] if no match
-    protocol, operation, encoded_data = CollectionsParamsExtractor.extract(content_uri)
+    # Erc721EthscriptionsCollectionParser returns [''.b, ''.b, ''.b] if no match
+    protocol, operation, encoded_data = Erc721EthscriptionsCollectionParser.extract(content_uri)
 
     # Check if extraction succeeded
     if protocol != ''.b && operation != ''.b
       {
-        type: :collections,
+        type: :erc721_ethscriptions_collection,
         protocol: protocol,
         operation: operation,
         params: nil, # Collections doesn't return decoded params
@@ -135,14 +135,14 @@ class ProtocolExtractor
     if result.nil?
       # No protocol detected - return empty protocol params
       [''.b, ''.b, ''.b]
-    elsif result[:type] == :fixed_fungible
-      # Fixed-fungible protocol - return in ABI-ready format
+    elsif result[:type] == :erc20_fixed_denomination
+      # Fixed denomination ERC-20 protocol - return in ABI-ready format
       protocol = result[:protocol].b
       operation = result[:operation]
       # For tokens, encode the params properly
       encoded_data = encode_token_data(result[:params])
       [protocol, operation, encoded_data]
-    elsif result[:type] == :collections
+    elsif result[:type] == :erc721_ethscriptions_collection
       # Collections protocol - already has encoded data
       [result[:protocol], result[:operation], result[:encoded_params]]
     else
@@ -158,7 +158,7 @@ class ProtocolExtractor
 
     # Encode based on operation type (operation is passed separately now)
     # Use tuple encoding for struct compatibility with contracts
-    # IMPORTANT: Field order must match FixedFungibleProtocolHandler's struct definitions!
+    # IMPORTANT: Field order must match ERC20FixedDenominationManager's struct definitions!
     if op == 'deploy'.b
       # DeployOperation struct: tick, maxSupply, mintAmount
       # Our params: tick, max (val1), lim (val2)
