@@ -10,7 +10,8 @@ RSpec.describe "Token Protocol End-to-End", type: :integration do
 
   describe "Complete Token Workflow with Protocol Validation" do
     it "deploys token and validates protocol execution" do
-      # JSON must be in exact format for token protocol
+      # Note: 'erc-20' is a legacy protocol identifier; the canonical protocol name is now 'erc-20-fixed-denomination'.
+      # This test uses the legacy format, which is normalized to the canonical name by the system.
       deploy_json = '{"p":"erc-20","op":"deploy","tick":"testcoin","max":"1000000","lim":"1000"}'
 
       result = create_and_validate_ethscription(
