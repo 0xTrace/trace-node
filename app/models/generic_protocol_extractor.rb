@@ -572,9 +572,9 @@ class GenericProtocolExtractor
     [type_hint, [hex_part.downcase].pack('H*')]
   end
 
-  # Helper method for fixed-fungible protocol parsing (shared with protocol extractor)
+  # Helper method for fixed-denomination ERC-20 parsing (shared with protocol extractor)
   def self.extract_token_params(content_uri)
     # Use the strict regex-based extractor for token protocol
-    FixedFungibleTokenParamsExtractor.extract(content_uri)
+    Erc20FixedDenominationParser.extract(content_uri)
   end
 end

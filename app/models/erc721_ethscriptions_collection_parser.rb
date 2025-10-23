@@ -1,5 +1,5 @@
-# Strict extractor for Collections protocol with canonical JSON validation
-class CollectionsParamsExtractor
+# Strict extractor for the ERC-721 Ethscriptions collection protocol with canonical JSON validation
+class Erc721EthscriptionsCollectionParser
   # Default return for invalid input
   DEFAULT_PARAMS = [''.b, ''.b, ''.b].freeze
 
@@ -114,7 +114,7 @@ class CollectionsParamsExtractor
       return DEFAULT_PARAMS unless data.is_a?(Hash)
 
       # Check protocol
-      return DEFAULT_PARAMS unless data['p'] == 'collections'
+      return DEFAULT_PARAMS unless data['p'] == 'erc-721-ethscriptions-collection'
 
       # Get operation
       operation = data['op']
@@ -131,7 +131,7 @@ class CollectionsParamsExtractor
       # Validate field types and encode
       encoded_data = encode_operation(operation, encoding_data, schema)
 
-      ['collections'.b, operation.b, encoded_data.b]
+      ['erc-721-ethscriptions-collection'.b, operation.b, encoded_data.b]
 
     rescue JSON::ParserError, ValidationError => e
       Rails.logger.debug "Collections extraction failed: #{e.message}" if defined?(Rails)

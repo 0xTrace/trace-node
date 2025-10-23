@@ -5,7 +5,7 @@ import "./TestSetup.sol";
 import "forge-std/console.sol";
 
 contract EthscriptionsTokenParamsTest is TestSetup {
-    string constant CANONICAL_PROTOCOL = "fixed-fungible";
+    string constant CANONICAL_PROTOCOL = "erc-20-fixed-denomination";
 
     function testCreateWithTokenDeployParams() public {
         // Create a token deploy ethscription
@@ -13,7 +13,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         string memory dataUri = string.concat("data:,", tokenJson);
         bytes32 contentUriHash = sha256(bytes(dataUri));
 
-        FixedFungibleProtocolHandler.DeployOperation memory deployOp = FixedFungibleProtocolHandler.DeployOperation({
+        ERC20FixedDenominationManager.DeployOperation memory deployOp = ERC20FixedDenominationManager.DeployOperation({
             tick: "eths",
             maxSupply: 21000000,
             mintAmount: 1000
@@ -51,7 +51,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         string memory dataUri = string.concat("data:,", tokenJson);
         bytes32 contentUriHash = sha256(bytes(dataUri));
 
-        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
+        ERC20FixedDenominationManager.MintOperation memory mintOp = ERC20FixedDenominationManager.MintOperation({
             tick: "eths",
             id: 1,
             amount: 1000
@@ -105,13 +105,13 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         assertEq(ethscriptions.totalSupply(), 12, "Should have created new ethscription");
     }
 
-    function testFixedFungibleProtocolHandlerIntegration() public {
+    function testERC20FixedDenominationManagerIntegration() public {
         // First create a deploy operation
         string memory deployJson = '{"p":"erc-20","op":"deploy","tick":"test","max":"1000000","lim":"100"}';
         string memory deployUri = string.concat("data:,", deployJson);
 
 
-        FixedFungibleProtocolHandler.DeployOperation memory deployOp = FixedFungibleProtocolHandler.DeployOperation({
+        ERC20FixedDenominationManager.DeployOperation memory deployOp = ERC20FixedDenominationManager.DeployOperation({
             tick: "test",
             maxSupply: 1000000,
             mintAmount: 100
@@ -137,7 +137,7 @@ contract EthscriptionsTokenParamsTest is TestSetup {
         string memory mintJson = '{"p":"erc-20","op":"mint","tick":"test","id":"1","amt":"100"}';
         string memory mintUri = string.concat("data:,", mintJson);
 
-        FixedFungibleProtocolHandler.MintOperation memory mintOp = FixedFungibleProtocolHandler.MintOperation({
+        ERC20FixedDenominationManager.MintOperation memory mintOp = ERC20FixedDenominationManager.MintOperation({
             tick: "test",
             id: 1,
             amount: 100

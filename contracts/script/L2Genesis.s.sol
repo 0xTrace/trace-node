@@ -198,9 +198,9 @@ contract L2Genesis is Script {
 
             // Wire up implementations for the Ethscriptions predeploys that use proxies
             bool isProxiedContract = addr == Predeploys.ETHSCRIPTIONS ||
-                addr == Predeploys.FIXED_FUNGIBLE_HANDLER ||
+                addr == Predeploys.ERC20_FIXED_DENOMINATION_MANAGER ||
                 addr == Predeploys.ETHSCRIPTIONS_PROVER ||
-                addr == Predeploys.COLLECTIONS_PROTOCOL_HANDLER;
+                addr == Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_MANAGER;
             if (isProxiedContract) {
                 address impl = Predeploys.predeployToCodeNamespace(addr);
                 setImplementation(addr, impl);
@@ -208,12 +208,12 @@ contract L2Genesis is Script {
         }
 
         // Set implementation code for non-ETHSCRIPTIONS contracts now
-        _setImplementationCodeNamed(Predeploys.FIXED_FUNGIBLE_HANDLER, "FixedFungibleProtocolHandler");
-        _setImplementationCodeNamed(Predeploys.COLLECTIONS_PROTOCOL_HANDLER, "CollectionsProtocolHandler");
+        _setImplementationCodeNamed(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER, "ERC20FixedDenominationManager");
+        _setImplementationCodeNamed(Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_MANAGER, "ERC721EthscriptionsCollectionManager");
         _setImplementationCodeNamed(Predeploys.ETHSCRIPTIONS_PROVER, "EthscriptionsProver");
         // Templates live directly at their implementation addresses (no proxy wrapping)
-        _setCodeAt(Predeploys.FIXED_FUNGIBLE_TEMPLATE_IMPLEMENTATION, "FixedFungibleERC20");
-        _setCodeAt(Predeploys.COLLECTIONS_TEMPLATE_IMPLEMENTATION, "CollectionsERC721");
+        _setCodeAt(Predeploys.ERC20_FIXED_DENOMINATION_IMPLEMENTATION, "ERC20FixedDenomination");
+        _setCodeAt(Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_IMPLEMENTATION, "ERC721EthscriptionsCollection");
 
         // Create genesis Ethscriptions (writes via proxy to proxy storage)
         createGenesisEthscriptions();
@@ -226,8 +226,8 @@ contract L2Genesis is Script {
     function registerProtocolHandlers() internal {
         Ethscriptions ethscriptions = Ethscriptions(Predeploys.ETHSCRIPTIONS);
 
-        ethscriptions.registerProtocol("fixed-fungible", Predeploys.FIXED_FUNGIBLE_HANDLER);
-        console.log("Registered fixed-fungible protocol handler:", Predeploys.FIXED_FUNGIBLE_HANDLER);
+        ethscriptions.registerProtocol("erc-20-fixed-denomination", Predeploys.ERC20_FIXED_DENOMINATION_MANAGER);
+        console.log("Registered erc-20-fixed-denomination protocol handler:", Predeploys.ERC20_FIXED_DENOMINATION_MANAGER);
 
         // Check environment variable for collections
         // Default to true so forge tests work (they don't go through genesis_generator.rb)
@@ -235,9 +235,9 @@ contract L2Genesis is Script {
         bool enableCollections = vm.envOr("ENABLE_COLLECTIONS", true);
 
         if (enableCollections) {
-            // Register the collections protocol handler for collections operations
-            ethscriptions.registerProtocol("collections", Predeploys.COLLECTIONS_PROTOCOL_HANDLER);
-            console.log("Registered collections protocol handler:", Predeploys.COLLECTIONS_PROTOCOL_HANDLER);
+            // Register the collections protocol handler for ERC-721 Ethscriptions collections
+            ethscriptions.registerProtocol("erc-721-ethscriptions-collection", Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_MANAGER);
+            console.log("Registered erc-721-ethscriptions-collection protocol handler:", Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_MANAGER);
         } else {
             console.log("Collections protocol not registered (ENABLE_COLLECTIONS=false)");
         }

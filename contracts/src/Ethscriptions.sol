@@ -44,7 +44,7 @@ contract Ethscriptions is ERC721EthscriptionsSequentialEnumerableUpgradeable {
     }
 
     struct ProtocolParams {
-        string protocolName;  // Protocol identifier (e.g., "erc-20", "collections", etc.)
+        string protocolName;  // Protocol identifier (e.g., "erc-20-fixed-denomination", "erc-721-ethscriptions-collection", etc.)
         string operation;     // Operation to perform (e.g., "mint", "deploy", "create_collection", etc.)
         bytes data;          // ABI-encoded parameters specific to the protocol/operation
     }
@@ -180,7 +180,7 @@ contract Ethscriptions is ERC721EthscriptionsSequentialEnumerableUpgradeable {
     // =============================================================
 
     /// @notice Register a protocol handler
-    /// @param protocol The protocol identifier (e.g., "erc-20", "collections")
+    /// @param protocol The protocol identifier (e.g., "erc-20-fixed-denomination", "erc-721-ethscriptions-collection")
     /// @param handler The address of the handler contract
     /// @dev Only callable by the depositor address (used during genesis setup)
     function registerProtocol(string calldata protocol, address handler) external {

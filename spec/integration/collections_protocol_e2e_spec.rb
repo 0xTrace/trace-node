@@ -80,7 +80,7 @@ RSpec.describe "Collections Protocol End-to-End", type: :integration do
     it "creates collection and validates protocol execution" do
       # Use the simple, working pattern
       collection_data = {
-        "p" => "collections",
+        "p" => "erc-721-ethscriptions-collection",
         "op" => "create_collection",
         "name" => "Test NFT",
         "symbol" => "TNFT",
@@ -116,7 +116,7 @@ RSpec.describe "Collections Protocol End-to-End", type: :integration do
       # The content might be in binary format
       content_str = stored[:content].is_a?(String) ? stored[:content] : stored[:content].force_encoding('UTF-8')
 
-      expect(content_str).to include('"p":"collections"')
+      expect(content_str).to include('"p":"erc-721-ethscriptions-collection"')
       expect(content_str).to include('"op":"create_collection"')
       expect(content_str).to include('"name":"Test NFT"')
 
@@ -160,7 +160,7 @@ RSpec.describe "Collections Protocol End-to-End", type: :integration do
     it "adds multiple items with attributes and validates execution" do
       # Use the same pattern as the first test which works
       collection_data = {
-        "p" => "collections",
+        "p" => "erc-721-ethscriptions-collection",
         "op" => "create_collection",
         "name" => "Test Batch Collection",
         "symbol" => "TBATCH",
@@ -215,7 +215,7 @@ RSpec.describe "Collections Protocol End-to-End", type: :integration do
 
       # Complex nested structure matching real-world usage
       batch_data = {
-        "p" => "collections",
+        "p" => "erc-721-ethscriptions-collection",
         "op" => "add_items_batch",
         "collection_id" => collection_id,
         "items" => [

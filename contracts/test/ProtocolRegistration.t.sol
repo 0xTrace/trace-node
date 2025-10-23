@@ -95,11 +95,11 @@ contract ProtocolRegistrationTest is TestSetup {
 
     /// @notice Test that pre-registered protocols (erc-20, collections) are already set
     function testPreRegisteredProtocols() public {
-        // Verify fixed-fungible is registered to FixedFungibleProtocolHandler
-        assertEq(ethscriptions.protocolHandlers("fixed-fungible"), Predeploys.FIXED_FUNGIBLE_HANDLER);
+        // Verify fixed denomination protocol maps to ERC20FixedDenominationManager
+        assertEq(ethscriptions.protocolHandlers("erc-20-fixed-denomination"), Predeploys.ERC20_FIXED_DENOMINATION_MANAGER);
 
-        // Verify collections is registered to CollectionsProtocolHandler
-        assertEq(ethscriptions.protocolHandlers("collections"), Predeploys.COLLECTIONS_PROTOCOL_HANDLER);
+        // Verify collections is registered to ERC721EthscriptionsCollectionManager
+        assertEq(ethscriptions.protocolHandlers("erc-721-ethscriptions-collection"), Predeploys.ERC721_ETHSCRIPTIONS_COLLECTION_MANAGER);
     }
 
     /// @notice Test that ethscriptions with registered protocol call the handler on transfer

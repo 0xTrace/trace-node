@@ -16,6 +16,6 @@ interface IProtocolHandler {
     ) external;
 
     /// @notice Returns human-readable protocol name
-    /// @return The protocol name (e.g., "erc-20", "collections")
+    /// @return The protocol name (e.g., "erc-20-fixed-denomination", "erc-721-ethscriptions-collection")
     function protocolName() external pure returns (string memory);
 }

@@ -8,14 +8,14 @@ import "./ERC721EthscriptionsEnumerableUpgradeable.sol";
 import "./Ethscriptions.sol";
 import {LibString} from "solady/utils/LibString.sol";
 import {Base64} from "solady/utils/Base64.sol";
-import "./CollectionsProtocolHandler.sol";
+import "./ERC721EthscriptionsCollectionManager.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
-/// @title CollectionsERC721
+/// @title ERC721EthscriptionsCollection
 /// @notice ERC-721 contract for an Ethscription collection
 /// @dev Maintains internal state but overrides ownerOf to delegate to Ethscriptions contract
-contract CollectionsERC721 is ERC721EthscriptionsEnumerableUpgradeable {
+contract ERC721EthscriptionsCollection is ERC721EthscriptionsEnumerableUpgradeable {
     using LibString for *;
 
     /// @notice The main Ethscriptions contract
@@ -132,8 +132,8 @@ contract CollectionsERC721 is ERC721EthscriptionsEnumerableUpgradeable {
         }
 
         // Get ethscription ID from manager
-        CollectionsProtocolHandler manager = CollectionsProtocolHandler(factory);
-        CollectionsProtocolHandler.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
+        ERC721EthscriptionsCollectionManager manager = ERC721EthscriptionsCollectionManager(factory);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
 
         if (item.ethscriptionId == bytes32(0)) {
             revert("Token not in collection");
@@ -154,9 +154,9 @@ contract CollectionsERC721 is ERC721EthscriptionsEnumerableUpgradeable {
             revert("Token does not exist");
         }
 
-        // Get collection metadata and item data from CollectionsProtocolHandler
-        CollectionsProtocolHandler manager = CollectionsProtocolHandler(factory);
-        CollectionsProtocolHandler.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
+        // Get collection metadata and item data from ERC721EthscriptionsCollectionManager
+        ERC721EthscriptionsCollectionManager manager = ERC721EthscriptionsCollectionManager(factory);
+        ERC721EthscriptionsCollectionManager.CollectionItem memory item = manager.getCollectionItem(collectionId, tokenId);
 
         if (item.ethscriptionId == bytes32(0)) {
             revert("Token not in collection");

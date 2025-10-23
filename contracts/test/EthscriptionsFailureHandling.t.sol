@@ -2,14 +2,14 @@
 pragma solidity ^0.8.24;
 
 import "./TestSetup.sol";
-import "../src/FixedFungibleProtocolHandler.sol";
+import "../src/ERC20FixedDenominationManager.sol";
 import "../src/EthscriptionsProver.sol";
 import "forge-std/console.sol";
 
 // Mock contracts that can be configured to fail
-contract FailingFixedFungibleProtocolHandler is FixedFungibleProtocolHandler {
+contract FailingERC20FixedDenominationManager is ERC20FixedDenominationManager {
     bool public shouldFail;
-    string public failMessage = "FixedFungibleProtocolHandler intentionally failed";
+    string public failMessage = "ERC20FixedDenominationManager intentionally failed";
 
     function setShouldFail(bool _shouldFail) external {
         shouldFail = _shouldFail;
@@ -64,7 +64,7 @@ contract FailingProver is EthscriptionsProver {
 }
 
 contract EthscriptionsFailureHandlingTest is TestSetup {
-    FailingFixedFungibleProtocolHandler failingFixedFungibleProtocolHandler;
+    FailingERC20FixedDenominationManager failingERC20FixedDenominationManager;
     FailingProver failingProver;
 
     event ProtocolHandlerFailed(
@@ -77,23 +77,23 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
         super.setUp();
 
         // Deploy failing mocks
-        failingFixedFungibleProtocolHandler = new FailingFixedFungibleProtocolHandler();
+        failingERC20FixedDenominationManager = new FailingERC20FixedDenominationManager();
         failingProver = new FailingProver();
 
         // Replace the token manager and prover with our mocks
         // We need to etch them at the predeploy addresses
-        vm.etch(Predeploys.FIXED_FUNGIBLE_HANDLER, address(failingFixedFungibleProtocolHandler).code);
+        vm.etch(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER, address(failingERC20FixedDenominationManager).code);
         vm.etch(Predeploys.ETHSCRIPTIONS_PROVER, address(failingProver).code);
 
         // Update our references
-        fixedFungibleHandler = FixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER);
+        fixedDenominationManager = ERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER);
         prover = EthscriptionsProver(Predeploys.ETHSCRIPTIONS_PROVER);
     }
 
-    function testCreateEthscriptionWithFixedFungibleProtocolHandlerFailure() public {
-        // Configure FixedFungibleProtocolHandler to fail
-        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(true);
-        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setFailMessage("Token operation rejected");
+    function testCreateEthscriptionWithERC20FixedDenominationManagerFailure() public {
+        // Configure ERC20FixedDenominationManager to fail
+        FailingERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER).setShouldFail(true);
+        FailingERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER).setFailMessage("Token operation rejected");
 
         bytes32 txHash = keccak256("test_tx_1");
         string memory dataUri = "data:,Hello World with failing token manager";
@@ -114,7 +114,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
         // Don't expect the ProtocolHandlerFailed event since this mock doesn't emit it properly
 
-        // Create ethscription - should succeed despite FixedFungibleProtocolHandler failure
+        // Create ethscription - should succeed despite ERC20FixedDenominationManager failure
         uint256 tokenId = ethscriptions.createEthscription(params);
 
         // Verify the ethscription was created successfully
@@ -145,7 +145,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
         assertEq(ethscriptions.totalSupply(), 12);
     }
 
-    function testTransferWithFixedFungibleProtocolHandlerFailure() public {
+    function testTransferWithERC20FixedDenominationManagerFailure() public {
         // First create an ethscription
         bytes32 txHash = keccak256("test_tx_3");
         string memory dataUri = "data:,Test transfer";
@@ -159,9 +159,9 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
         uint256 tokenId = ethscriptions.createEthscription(params);
 
-        // Now configure both FixedFungibleProtocolHandler and Prover to fail
-        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(true);
-        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setFailMessage("Transfer handling failed");
+        // Now configure both ERC20FixedDenominationManager and Prover to fail
+        FailingERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER).setShouldFail(true);
+        FailingERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER).setFailMessage("Transfer handling failed");
         FailingProver(Predeploys.ETHSCRIPTIONS_PROVER).setShouldFail(true);
 
         // Transfer should succeed despite failures
@@ -174,7 +174,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
     function testBothFailuresOnCreate() public {
         // Configure both to fail
-        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(true);
+        FailingERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER).setShouldFail(true);
         FailingProver(Predeploys.ETHSCRIPTIONS_PROVER).setShouldFail(true);
 
         bytes32 txHash = keccak256("test_tx_4");
@@ -204,7 +204,7 @@ contract EthscriptionsFailureHandlingTest is TestSetup {
 
     function testSuccessfulOperationNoFailureEvents() public {
         // Configure both to succeed
-        FailingFixedFungibleProtocolHandler(Predeploys.FIXED_FUNGIBLE_HANDLER).setShouldFail(false);
+        FailingERC20FixedDenominationManager(Predeploys.ERC20_FIXED_DENOMINATION_MANAGER).setShouldFail(false);
         FailingProver(Predeploys.ETHSCRIPTIONS_PROVER).setShouldFail(false);
 
         bytes32 txHash = keccak256("test_tx_5");
