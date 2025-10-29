@@ -477,12 +477,36 @@ class BlockValidator
   end
 
   def verify_transfer_ownership(transfers, block_tag)
-    # Group transfers by token to get final owner
+    # Replay transfers in deterministic order to determine the true final owner
     final_owners = {}
 
-    transfers.each do |transfer|
+    sorted_transfers = Array(transfers).each_with_index.sort_by do |transfer, original_index|
+      block_number = transfer[:block_number]
+      transaction_index = transfer[:transaction_index]
+
+      if block_number.nil? || transaction_index.nil?
+        raise "Transfer missing ordering metadata: #{transfer.inspect}"
+      end
+
+      log_index = transfer[:event_log_index] || transfer[:log_index]
+
+      [
+        block_number.to_i,
+        transaction_index.to_i,
+        log_index.nil? ? -1 : log_index.to_i, # calldata transfers (no log) happen before events
+        original_index
+      ]
+    end.map { |transfer, _| transfer }
+
+    sorted_transfers.each do |transfer|
       token_id = transfer[:token_id]
-      final_owners[token_id] = transfer[:to]
+      to_address = transfer[:to]
+  
+      if token_id.blank? || to_address.blank?
+        raise "Transfer missing token_id or recipient: #{transfer.inspect}"
+      end
+  
+      final_owners[token_id.downcase] = to_address.downcase
     end
 
     # Verify each token's final owner

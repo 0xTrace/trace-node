@@ -9,6 +9,33 @@ class ValidationResult < ApplicationRecord
     where("JSON_EXTRACT(validation_stats, '$.validation_details.expected_creations') > 0 OR JSON_EXTRACT(validation_stats, '$.validation_details.expected_transfers') > 0 OR JSON_EXTRACT(validation_stats, '$.validation_details.storage_checks') > 0")
   }
 
+  def self.delete_successes_older_than(older_than: 6.hours, batch_size: 2_000, sleep_between_batches: 0.3)
+    cutoff =
+      case older_than
+      when ActiveSupport::Duration
+        older_than.ago
+      when Numeric
+        Time.current - older_than
+      when Time
+        older_than
+      else
+        raise ArgumentError, "Unsupported older_than: #{older_than.class}"
+      end
+
+    scope = successful.where('validated_at < ?', cutoff)
+    total_deleted = 0
+
+    scope.in_batches(of: batch_size) do |relation|
+      deleted = relation.delete_all
+      break if deleted.zero?
+
+      total_deleted += deleted
+      sleep(sleep_between_batches) if sleep_between_batches.positive?
+    end
+
+    total_deleted
+  end
+
   # Class methods for validation management
   def self.last_validated_block
     maximum(:l1_block)

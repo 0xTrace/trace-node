@@ -135,11 +135,6 @@ module Clockwork
             total_blocks_imported += blocks_imported
 
             puts "[#{Time.now}] Imported #{blocks_imported} blocks (#{initial_block + 1} to #{final_block})"
-
-            # Show validation summary if enabled
-            if ENV.fetch('VALIDATION_ENABLED').casecmp?('true')
-              puts importer.validation_summary
-            end
           else
             # We're caught up
             elapsed = (Time.now - start_time).round(2)

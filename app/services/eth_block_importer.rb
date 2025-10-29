@@ -198,19 +198,24 @@ class EthBlockImporter
 
     begin
       loop do
+        ImportProfiler.start("import_blocks_until_done_loop")
         # Check for validation failures
+        ImportProfiler.start("real_validation_failure_detected")
         if real_validation_failure_detected?
           failed_block = get_validation_failure_block
           logger.error "Import stopped due to validation failure at block #{failed_block}"
           raise ValidationFailureError.new("Validation failure detected at block #{failed_block}")
         end
+        ImportProfiler.stop("real_validation_failure_detected")
 
         # Check if validation is stalled
+        ImportProfiler.start("validation_stalled")
         if validation_stalled?
           current_position = current_max_eth_block_number
           logger.warn "Import paused - validation is behind (current: #{current_position})"
           raise ValidationStalledError.new("Validation stalled - waiting for validation to catch up")
         end
+        ImportProfiler.stop("validation_stalled")
 
         block_number = next_block_to_import
 
@@ -252,6 +257,8 @@ class EthBlockImporter
       rescue => e
         logger.error "Import error: #{e.message}"
         raise e
+      ensure
+        ImportProfiler.stop("import_blocks_until_done_loop")
       end
     end
   end
@@ -383,9 +390,9 @@ class EthBlockImporter
       ValidationJob.perform_later(block_number, l2_block_hashes)
     end
 
-    ImportProfiler.stop("import_single_block")
-
     [imported_ethscriptions_blocks, [eth_block]]
+  ensure
+    ImportProfiler.stop("import_single_block")
   end
   
   def import_next_block
@@ -486,6 +493,8 @@ class EthBlockImporter
 
   def report_import_stats(blocks_imported_count:, stats_start_time:, stats_start_block:,
                          total_gas_used:, total_transactions:, imported_l2_blocks:, recent_batch_time:)
+    ImportProfiler.start("report_import_stats")
+                         
     elapsed_time = Time.current - stats_start_time
     current_block = current_max_eth_block_number
 
@@ -521,7 +530,6 @@ class EthBlockImporter
     if ENV.fetch('VALIDATION_ENABLED').casecmp?('true')
       last_validated = ValidationResult.last_validated_block || 0
       validation_lag = current_block - last_validated
-      validation_stats = ValidationResult.validation_stats(since: 1.hour.ago)
 
       lag_status = case validation_lag
       when 0..5 then "✅ CURRENT"
@@ -530,11 +538,7 @@ class EthBlockImporter
       else "🔴 VERY BEHIND"
       end
 
-      if validation_stats[:total] > 0
-        validation_line = "🔍 VALIDATION: #{lag_status} (#{validation_lag} behind) | #{validation_stats[:passed]}/#{validation_stats[:total]} passed (#{validation_stats[:pass_rate]}%)"
-      else
-        validation_line = "🔍 VALIDATION: #{lag_status} (#{validation_lag} behind) | No validations completed yet"
-      end
+      validation_line = "🔍 VALIDATION: #{lag_status} (#{validation_lag} behind)"
     else
       validation_line = "🔍 Validation: DISABLED"
     end
@@ -558,6 +562,7 @@ class EthBlockImporter
     if ImportProfiler.enabled?
       logger.info ""
       logger.info "🔍 DETAILED PROFILER STATS:"
+      ImportProfiler.stop("report_import_stats")
       ImportProfiler.report
       ImportProfiler.reset
     end
@@ -566,15 +571,6 @@ class EthBlockImporter
   end
 
   public
-
-  def validation_summary
-    return nil unless ENV.fetch('VALIDATION_ENABLED').casecmp?('true')
-
-    stats = ValidationResult.validation_stats(since: 1.hour.ago)
-    return "No validations completed" if stats[:total] == 0
-
-    "#{stats[:passed]}/#{stats[:total]} passed (#{stats[:pass_rate]}%), #{stats[:failed]} failed"
-  end
 
   def shutdown
     @prefetcher&.shutdown
