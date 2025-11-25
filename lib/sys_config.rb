@@ -42,27 +42,27 @@ module SysConfig
   
   # ESIP fork block numbers
   def esip1_enabled?(block_number)
-    on_testnet? || block_number >= 17672762
+    on_testnet? || block_number >= 0
   end
   
   def esip2_enabled?(block_number)
-    on_testnet? || block_number >= 17764910
+    on_testnet? || block_number >= 0
   end
   
   def esip3_enabled?(block_number)
-    on_testnet? || block_number >= 18130000
+    on_testnet? || block_number >= 0
   end
   
   def esip5_enabled?(block_number)
-    on_testnet? || block_number >= 18330000
+    on_testnet? || block_number >= 0
   end
   
   def esip7_enabled?(block_number)
-    on_testnet? || block_number >= 19376500
+    on_testnet? || block_number >= 0
   end
   
   def esip8_enabled?(block_number)
-    on_testnet? || block_number >= 19526000
+    on_testnet? || block_number >= 0
   end
   
   def on_testnet?

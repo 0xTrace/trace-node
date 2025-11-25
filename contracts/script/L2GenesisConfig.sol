@@ -8,7 +8,7 @@ import { Constants } from "../src/libraries/Constants.sol";
 library L2GenesisConfig {
     /// @notice Configuration struct for L2 Genesis
     struct Config {
-        uint256 l1ChainID;
+        uint256 ;
         uint256 l2ChainID;
         address proxyAdminOwner;
         bool fundDevAccounts;
@@ -17,8 +17,8 @@ library L2GenesisConfig {
     /// @notice Returns the default configuration for L2 Genesis
     function getConfig() internal pure returns (Config memory) {
         return Config({
-            l1ChainID: 1, // Ethereum mainnet
-            l2ChainID: 0xeeee, // Custom L2 chain ID
+            l1ChainID: 56, // Ethereum mainnet
+            l2ChainID: 0xbe44, // Custom L2 chain ID
             proxyAdminOwner: Constants.DEPOSITOR_ACCOUNT, // Default admin
             fundDevAccounts: false
         });

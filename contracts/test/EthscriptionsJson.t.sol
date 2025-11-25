@@ -243,7 +243,7 @@ contract EthscriptionsJsonTest is TestSetup {
         bytes memory contentUri = abi.encodePacked(prefix, content);
         assertEq(contentUri.length, 24575 * 2, "Total should be exactly 2 chunks");
         
-        bytes32 txHash = bytes32(uint256(0xEEEE));
+        bytes32 txHash = bytes32(uint256(0xBE44));
         vm.prank(address(0xAAAA));
         uint256 tokenId = eth.createEthscription(createTestParams(
             txHash,
@@ -286,7 +286,7 @@ contract EthscriptionsJsonTest is TestSetup {
         vm.prank(address(0xCCCC));
         uint256 tokenId = eth.createEthscription(createTestParams(
             txHash,
-            address(0xEEEE),
+            address(0xBE44),
             string(contentUri),
             false
         ));

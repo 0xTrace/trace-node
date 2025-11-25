@@ -2,11 +2,11 @@ module ChainIdManager
   extend self
   include Memery
   
-  MAINNET_CHAIN_ID = 1
-  SEPOLIA_CHAIN_ID = 11155111
+  MAINNET_CHAIN_ID = 56
+  SEPOLIA_CHAIN_ID = 97
   
-  ETHSCRIPTIONS_MAINNET_CHAIN_ID = 0xeeee
-  ETHSCRIPTIONS_SEPOLIA_CHAIN_ID = 0xeeeea
+  ETHSCRIPTIONS_MAINNET_CHAIN_ID = 0xbe44
+  ETHSCRIPTIONS_SEPOLIA_CHAIN_ID = 0xbe444
   
   def current_l2_chain_id
     candidate = l2_chain_id_from_l1_network_name(current_l1_network)
