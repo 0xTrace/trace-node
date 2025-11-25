@@ -60,7 +60,7 @@ class EthscriptionsBlock < T::Struct
       eth_block_base_fee_per_gas: ethscriptions_block.eth_block_base_fee_per_gas,
       parent_beacon_block_root: ethscriptions_block.parent_beacon_block_root,
       number: ethscriptions_block.number + 1,
-      timestamp: ethscriptions_block.timestamp + 12,
+      timestamp: ethscriptions_block.timestamp + SysConfig.evm_block_time_seconds,
       sequence_number: ethscriptions_block.sequence_number + 1
     )
   end

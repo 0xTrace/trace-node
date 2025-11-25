@@ -3,7 +3,8 @@ module SysConfig
   
   # Fixed L2 parameters
   L2_BLOCK_GAS_LIMIT = 10_000_000_000  # Fixed gas limit (gas is never charged)
-  L2_BLOCK_TIME = 12
+  L2_PHYSICAL_BLOCK_TIME = 0.75
+  L2_EVM_BLOCK_TIME = 1
   
   # System addresses (matching Solidity contracts)
   SYSTEM_ADDRESS = Address20.from_hex("0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001")
@@ -21,6 +22,14 @@ module SysConfig
   
   def block_gas_limit(block = nil)
     L2_BLOCK_GAS_LIMIT
+  end
+
+  def physical_block_time_seconds
+    L2_PHYSICAL_BLOCK_TIME
+  end
+
+  def evm_block_time_seconds
+    L2_EVM_BLOCK_TIME
   end
   
   def l1_genesis_block_number

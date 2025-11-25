@@ -1,3 +1,5 @@
+require 'thread'
+
 module GethDriver
   extend self
   attr_reader :password
@@ -48,6 +50,8 @@ module GethDriver
     safe_block:,
     finalized_block:
   )
+    enforce_physical_block_time_spacing
+
     # Create filler blocks if necessary and update head_block
     ImportProfiler.start("create_filler_blocks")
     filler_blocks = create_filler_blocks(
@@ -187,7 +191,7 @@ module GethDriver
     finalized_block:
   )
     max_filler_blocks = 100
-    block_interval = 12
+    block_interval = SysConfig.evm_block_time_seconds
     last_block = head_block
     filler_blocks = []
 
@@ -221,6 +225,20 @@ module GethDriver
     filler_blocks.sort_by(&:number)
   end
   
+  def enforce_physical_block_time_spacing
+    @proposal_lock ||= Mutex.new
+    @proposal_lock.synchronize do
+      target_interval = SysConfig.physical_block_time_seconds
+      now = Time.now
+      @last_proposal_wall_clock ||= now - target_interval
+
+      sleep_duration = target_interval - (now - @last_proposal_wall_clock)
+      sleep(sleep_duration) if sleep_duration.positive?
+
+      @last_proposal_wall_clock = Time.now
+    end
+  end
+
   def init_command
     http_port = ENV.fetch('NON_AUTH_GETH_RPC_URL').split(':').last
     authrpc_port = ENV.fetch('GETH_RPC_URL').split(':').last
